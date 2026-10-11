@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" class="h-full scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/neevevara-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neevevera Private Limited — Engineering &amp; Construction</title>
+    <meta name="description" content="Neevevera Private Limited delivers specialized civil construction, commercial towers, marine infrastructure, and industrial developments across Odisha, the Andaman &amp; Nicobar Islands, and West Bengal." />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CDN with Full Project Configuration -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "brand-blue": "#07558F",
+              "brand-blue-hover": "#054373",
+              "brand-green": "#075638",
+              "brand-red": "#D83D32",
+              "brand-gold": "#B89038",
+              "surface-warm": "#FDF8EE", // Richer golden white
+              "surface-white": "#FCF9F2", // Softer golden white instead of harsh white
+              "surface-muted": "#F3EDE0", // Deeper golden beige
+              "graphite": "#121417", // Deep blue-black
+              "soft-grey": "#656560",
+              "border-neutral": "#E6DDC8", // Golden tinted border
+              "border-light": "#EFE9D9",
+
+              /* Project Portfolio Tokens */
+              "surface": "#fdf9f0",
+              "primary": "#000000",
+              "surface-container": "#f1eee5",
+              "primary-fixed": "#e5e2e1",
+              "on-tertiary-fixed": "#221b00",
+              "on-tertiary": "#ffffff",
+              "primary-fixed-dim": "#c8c6c5",
+              "background": "#fdf9f0",
+              "tertiary-fixed-dim": "#e4c537",
+              "surface-container-low": "#f7f3ea",
+              "on-secondary-fixed-variant": "#0f4b70",
+              "on-error-container": "#93000a",
+              "surface-tint": "#5f5e5e",
+              "secondary-container": "#a0d1fd",
+              "inverse-primary": "#c8c6c5",
+              "on-primary-container": "#858383",
+              "on-primary-fixed-variant": "#474746",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#ffe165",
+              "on-secondary-container": "#255a80",
+              "tertiary-container": "#c7aa18",
+              "on-secondary-fixed": "#001d31",
+              "on-primary-fixed": "#1c1b1b",
+              "on-surface-variant": "#444748",
+              "on-tertiary-fixed-variant": "#544600",
+              "on-error": "#ffffff",
+              "outline-variant": "#c4c7c7",
+              "surface-container-highest": "#e6e2d9",
+              "on-surface": "#1c1c16",
+              "surface-dim": "#dddad1",
+              "surface-container-high": "#ece8df",
+              "primary-container": "#1c1b1b",
+              "surface-bright": "#fdf9f0",
+              "inverse-on-surface": "#f4f0e7",
+              "on-primary": "#ffffff",
+              "outline": "#747878",
+              "secondary-fixed": "#cce5ff",
+              "on-tertiary-container": "#4b3f00",
+              "surface-variant": "#e6e2d9",
+              "inverse-surface": "#31302b",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#9bccf7",
+              "secondary": "#2f6389",
+              "tertiary": "#6f5d00",
+              "surface-container-lowest": "#ffffff",
+              "error": "#ba1a1a",
+              "on-background": "#1c1c16"
+            },
+            spacing: {
+              "space-md": "1rem",
+              "space-lg": "1.5rem",
+              "space-xl": "2.5rem",
+              "space-sm": "0.5rem",
+              "margin": "1.5rem",
+              "margin-md": "3rem",
+              "space-xs": "0.25rem",
+              "margin-lg": "5rem",
+              "gutter": "1.5rem",
+              "gutter-lg": "2.5rem"
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Manrope", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+              "headline-xl-mobile": ["Manrope"],
+              "label-caps": ["JetBrains Mono"],
+              "body-sm": ["Inter"],
+              "display-lg": ["Manrope"],
+              "headline-lg": ["Manrope"],
+              "headline-md": ["Manrope"],
+              "body-md": ["Inter"],
+              "headline-xl": ["Manrope"],
+              "body-lg": ["Inter"],
+              "headline-sm": ["Manrope"],
+              "label-technical": ["JetBrains Mono"],
+              "display-lg-mobile": ["Manrope"]
+            },
+            fontSize: {
+              "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "600" }],
+              "label-caps": ["10px", { lineHeight: "14px", letterSpacing: "0.1em", fontWeight: "600" }],
+              "body-sm": ["13px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }],
+              "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "600" }],
+              "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "600" }],
+              "headline-md": ["22px", { lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "600" }],
+              "body-md": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }],
+              "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.025em", fontWeight: "600" }],
+              "body-lg": ["18px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "400" }],
+              "headline-sm": ["18px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }],
+              "label-technical": ["11px", { lineHeight: "16px", letterSpacing: "0.06em", fontWeight: "500" }],
+              "display-lg-mobile": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "600" }]
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      @layer base {
+        html, body { margin: 0; padding: 0; }
+        body { background-color: #FAF9F6; color: #171717; }
+      }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #FAF9F6; }
+      ::-webkit-scrollbar-thumb { background: #D8D8D2; }
+      ::-webkit-scrollbar-thumb:hover { background: #07558F; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body class="bg-surface-warm font-sans text-graphite antialiased min-h-screen flex flex-col selection:bg-brand-blue/15 selection:text-brand-blue">
+    <div id="root" class="min-h-screen flex flex-col"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

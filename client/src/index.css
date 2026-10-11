@@ -1,0 +1,37 @@
+/* ── Neevevera Design System Global Styles ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #FAF9F6;
+  color: #171717;
+  scroll-behavior: smooth;
+}
+
+.font-display {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Keep monospace purely for code snippets, not used in UI */
+
+/* Material Symbols Outlined default styling */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
