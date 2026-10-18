@@ -1,0 +1,128 @@
+name: Neevevera Production CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neevevera-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Build frontend
+        working-directory: client
+        run: |
+          npm ci
+          npm run build
+
+      - name: Validate backend
+        working-directory: server
+        run: |
+          npm ci
+          node --check server.js
+          node --check src/app.js
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Package release
+        run: |
+          tar -czf /tmp/neevevera-deploy.tar.gz \
+            --exclude=node_modules \
+            --exclude=.env \
+            --exclude='.env.*' \
+            --exclude=.git \
+            client server
+
+      - name: Upload release with SSH password
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USERNAME: ${{ secrets.SERVER_USER }}
+        run: |
+          sshpass -e scp \
+            -o StrictHostKeyChecking=accept-new \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            /tmp/neevevera-deploy.tar.gz \
+            "$USERNAME@$HOST:/tmp/neevevera-deploy.tar.gz"
+
+      - name: Deploy to production
+        env:
+          SSHPASS: ${{ secrets.SERVER_PASSWORD }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USERNAME: ${{ secrets.SERVER_USER }}
+        run: |
+          sshpass -e ssh \
+            -o StrictHostKeyChecking=accept-new \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            "$USERNAME@$HOST" 'bash -se' <<'REMOTE'
+          set -Eeuo pipefail
+          APP=/var/www/Neevevera_Client_Project
+          BASE=/var/www/neevevera-cicd
+          STAGE="$BASE/staging"
+          BACKUP="$BASE/backups/$(date +%Y%m%d_%H%M%S)-$$"
+          mkdir -p "$BASE/backups" "$STAGE" "$BACKUP"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          tar -xzf /tmp/neevevera-deploy.tar.gz -C "$STAGE"
+          rm -f /tmp/neevevera-deploy.tar.gz
+          test -f "$APP/server/.env"
+          test -f "$APP/client/dist/index.html"
+          cd "$STAGE/server"
+          npm ci --omit=dev
+          cp -a "$APP/client/dist" "$BACKUP/dist"
+          cp -a "$APP/server" "$BACKUP/server"
+          touch "$BACKUP/ready"
+          rollback() {
+            echo 'Deployment failed; restoring previous application'
+            if [ -f "$BACKUP/ready" ]; then
+              rsync -a --delete "$BACKUP/dist/" "$APP/client/dist/"
+              rsync -a --delete --exclude='.env' "$BACKUP/server/" "$APP/server/"
+              systemctl restart neevevera.service || true
+            fi
+          }
+          trap rollback ERR
+          rsync -a --delete "$STAGE/client/dist/" "$APP/client/dist/"
+          rsync -a --delete --exclude='.env' "$STAGE/server/" "$APP/server/"
+          systemctl restart neevevera.service
+          healthy=false
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:5000/api/health >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 3
+          done
+          if [ "$healthy" != true ]; then
+            echo 'Backend health check failed'
+            false
+          fi
+          trap - ERR
+          rm -rf "$STAGE"
+          echo 'Deployment successful'
+          REMOTE
+
+      - name: Verify website
+        run: |
+          curl --fail --silent --show-error https://neevevara.com/api/health
