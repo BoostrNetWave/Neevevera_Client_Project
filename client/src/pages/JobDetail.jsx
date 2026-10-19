@@ -14,7 +14,8 @@ const JobDetail = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/careers/${slug}`)
+        const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+        const res = await axios.get(`${API}/careers/${slug}`)
         if (res.data.success && res.data.data) {
           setJob(res.data.data)
         }

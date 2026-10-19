@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -15,8 +17,9 @@ const AdminLogin = () => {
     setError('');
     try {
       const res = await axios.post(
-        'http://localhost:5000/api/auth/login',
-        { email, password }
+        `${API}/auth/login`,
+        { email, password },
+        { withCredentials: true }
       );
       // Server sets HttpOnly accessToken cookie.
       // Store a flag + user info locally for ProtectedRoute and UI display.

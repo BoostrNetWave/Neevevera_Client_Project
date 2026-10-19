@@ -3,9 +3,10 @@
  *
  * One-time script: repairs MediaAsset.usageCount for every record across the
  * entire CMS (Projects, Services, Team, Blog, etc.) that existed before the
- * system-wide usageCount tracking fix (2026-10-06).
+ * system-wide usageCount tracking fix.
  *
- * Supersedes the earlier gallery-only backfill.
+ * Uses the single-source-of-truth registry utils/mediaFields.js to extract
+ * all media references across every collection.
  *
  * Usage:
  *   node scripts/backfill-media-usage.js [--dry-run]
@@ -26,6 +27,7 @@ import Testimonial from '../src/models/Testimonial.js';
 import Blog from '../src/models/Blog.js';
 import HomeContent from '../src/models/HomeContent.js';
 import CompanyInfo from '../src/models/CompanyInfo.js';
+import { extractMediaUrls } from '../src/utils/mediaFields.js';
 
 const DRY_RUN = !process.argv.includes('--execute');
 
@@ -44,48 +46,38 @@ async function run() {
   const referencedUrls = new Set();
   const referencedPublicIds = new Set();
 
-  // Helper to safely add to sets
   const addUrl = (url) => { if (url) referencedUrls.add(url); };
-  const addUrls = (arr) => { if (Array.isArray(arr)) arr.forEach(addUrl); };
   const addPublicId = (pid) => { if (pid) referencedPublicIds.add(pid); };
 
-  // Gallery (uses publicId and imageUrl)
-  const galleries = await GalleryItem.find().lean();
-  galleries.forEach(g => { addUrl(g.imageUrl); addPublicId(g.publicId); });
+  const collections = [
+    { modelName: 'GalleryItem', model: GalleryItem },
+    { modelName: 'Project',     model: Project },
+    { modelName: 'Service',     model: Service },
+    { modelName: 'TeamMember',  model: TeamMember },
+    { modelName: 'Testimonial', model: Testimonial },
+    { modelName: 'Blog',        model: Blog },
+    { modelName: 'HomeContent', model: HomeContent },
+    { modelName: 'CompanyInfo', model: CompanyInfo },
+  ];
 
-  // Projects (coverImage, gallery array)
-  const projects = await Project.find().lean();
-  projects.forEach(p => { addUrl(p.coverImage); addUrls(p.gallery); });
-
-  // Services (coverImage)
-  const services = await Service.find().lean();
-  services.forEach(s => addUrl(s.coverImage));
-
-  // Team (image)
-  const team = await TeamMember.find().lean();
-  team.forEach(t => addUrl(t.image));
-
-  // Testimonial (image)
-  const testimonials = await Testimonial.find().lean();
-  testimonials.forEach(t => addUrl(t.image));
-
-  // Blog (coverImage)
-  const blogs = await Blog.find().lean();
-  blogs.forEach(b => addUrl(b.coverImage));
-
-  // HomeContent (heroImage)
-  const home = await HomeContent.findOne({ _singletonKey: 'home' }).lean();
-  if (home) addUrl(home.heroImage);
-
-  // CompanyInfo (logoLight, logoDark, certifications)
-  const company = await CompanyInfo.findOne({ _singleton: 'company' }).lean();
-  if (company) {
-    addUrl(company.logoLight);
-    addUrl(company.logoDark);
-    addUrls((company.certifications || []).map(c => c.image));
+  console.log('Scanning collections using MEDIA_FIELDS registry:');
+  for (const { modelName, model } of collections) {
+    const docs = await model.find().lean();
+    let colUrlCount = 0;
+    for (const doc of docs) {
+      const urls = extractMediaUrls(modelName, doc);
+      for (const u of urls) {
+        addUrl(u);
+        colUrlCount++;
+      }
+      if (modelName === 'GalleryItem' && doc.publicId) {
+        addPublicId(doc.publicId);
+      }
+    }
+    console.log(`  • ${modelName.padEnd(12)}: ${docs.length.toString().padStart(2)} doc(s), ${colUrlCount} media reference(s)`);
   }
 
-  console.log(`Found ${referencedUrls.size} unique URLs and ${referencedPublicIds.size} unique PublicIDs actively referenced in content.\n`);
+  console.log(`\nFound ${referencedUrls.size} unique URLs and ${referencedPublicIds.size} unique PublicIDs actively referenced across all content.\n`);
 
   // 2. Fetch all MediaAssets that match these references
   const query = {
@@ -110,12 +102,18 @@ async function run() {
   }
 
   console.log(`─── Needs increment (usageCount === 0): ${toIncrement.length}`);
-  toIncrement.forEach(a => console.log(`  + ${a.publicId || a.url}`));
+  toIncrement.forEach(a => console.log(`  + [${a.context || 'asset'}] ${a.publicId || a.url}`));
 
   if (alreadyClaimed.length > 0) {
-    console.log(`\n─── ALREADY PATCHED (usageCount >= 1): ${alreadyClaimed.length}`);
-    alreadyClaimed.forEach(a => console.log(`  ✓ ${a.publicId || a.url}  usageCount=${a.usageCount}`));
+    console.log(`\n─── Already claimed (usageCount >= 1): ${alreadyClaimed.length}`);
+    alreadyClaimed.forEach(a => console.log(`  ✓ [${a.context || 'asset'}] ${a.publicId || a.url}  usageCount=${a.usageCount}`));
   }
+
+  // Also check if any known orphan is accidentally matched:
+  const allOrphans = await MediaAsset.find({ usageCount: 0 }).lean();
+  const trueOrphans = allOrphans.filter(o => !referencedUrls.has(o.url) && !referencedPublicIds.has(o.publicId));
+  console.log(`\n─── Unreferenced true orphans remaining at usageCount: 0: ${trueOrphans.length}`);
+  trueOrphans.forEach(o => console.log(`  orphan: ${o.publicId || o.url} (context: ${o.context})`));
 
   if (toIncrement.length === 0) {
     console.log('\nNothing to increment. All referenced MediaAssets are correctly tracked.');

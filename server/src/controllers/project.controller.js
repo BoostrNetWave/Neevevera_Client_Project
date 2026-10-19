@@ -1,6 +1,6 @@
 import Project from '../models/Project.js';
 import { paginate } from '../utils/paginate.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { claimDocMedia, syncDocMediaUsage, releaseDocMedia } from '../utils/mediaFields.js';
 
 export const getProjects = async (req, res) => {
   const query = { isDeleted: false };
@@ -30,12 +30,7 @@ export const getProjectById = async (req, res) => {
 
 export const createProject = async (req, res) => {
   const project = await Project.create({ ...req.body, createdBy: req.user._id, isDeleted: false });
-  
-  if (project.coverImage) incrementMediaUsage(project.coverImage);
-  if (project.gallery && project.gallery.length > 0) {
-    project.gallery.forEach(url => incrementMediaUsage(url));
-  }
-  
+  await claimDocMedia('Project', project);
   res.status(201).json({ success: true, data: project });
 };
 
@@ -56,30 +51,14 @@ export const updateProject = async (req, res) => {
   }
 
   const { lastKnownUpdatedAt, ...updateData } = req.body;
-  
-  const oldCover = current.coverImage;
-  const newCover = updateData.coverImage;
-  const oldGallery = current.gallery || [];
-  const newGallery = updateData.gallery || [];
-  
+
   const updated = await Project.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
 
-  // Sync coverImage
-  if (newCover !== oldCover) {
-    if (oldCover) decrementMediaUsage(oldCover);
-    if (newCover) incrementMediaUsage(newCover);
-  }
-
-  // Sync gallery array
-  const addedToGallery = newGallery.filter(url => !oldGallery.includes(url));
-  const removedFromGallery = oldGallery.filter(url => !newGallery.includes(url));
-  
-  addedToGallery.forEach(url => incrementMediaUsage(url));
-  removedFromGallery.forEach(url => decrementMediaUsage(url));
+  await syncDocMediaUsage('Project', current, updated);
 
   res.json({ success: true, data: updated });
 };
@@ -93,11 +72,8 @@ export const deleteProject = async (req, res) => {
     isDeleted: true,
     updatedBy: req.user._id,
   });
-  
-  if (project.coverImage) decrementMediaUsage(project.coverImage);
-  if (project.gallery && project.gallery.length > 0) {
-    project.gallery.forEach(url => decrementMediaUsage(url));
-  }
-  
+
+  await releaseDocMedia('Project', project);
+
   res.json({ success: true, message: 'Project soft-deleted.' });
 };

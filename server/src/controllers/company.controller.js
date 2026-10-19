@@ -1,5 +1,5 @@
 import CompanyInfo from '../models/CompanyInfo.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { syncDocMediaUsage } from '../utils/mediaFields.js';
 
 /**
  * company.controller.js
@@ -36,7 +36,7 @@ export const updateCompanyInfo = async (req, res) => {
     'history', 'foundedYear', 'headquarters',
     'values', 'certifications', 'awards', 'stats',
     'email', 'phone', 'address', 'gstNumber', 'cinNumber', 'website',
-    'social',
+    'social', 'logoLight', 'logoDark',
   ];
 
   const updates = {};
@@ -52,35 +52,13 @@ export const updateCompanyInfo = async (req, res) => {
 
   const current = await CompanyInfo.findOne({ _singleton: 'company' });
 
-  const oldLogoLight = current?.logoLight;
-  const newLogoLight = updates.logoLight;
-  const oldLogoDark = current?.logoDark;
-  const newLogoDark = updates.logoDark;
-  
-  const oldCerts = (current?.certifications || []).map(c => c.image).filter(Boolean);
-  const newCerts = (updates.certifications || []).map(c => c.image).filter(Boolean);
-
   const info = await CompanyInfo.findOneAndUpdate(
     { _singleton: 'company' },
     { $set: updates },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: 'after', upsert: true, runValidators: true }
   );
-  
-  if (newLogoLight !== oldLogoLight) {
-    if (oldLogoLight) decrementMediaUsage(oldLogoLight);
-    if (newLogoLight) incrementMediaUsage(newLogoLight);
-  }
-  if (newLogoDark !== oldLogoDark) {
-    if (oldLogoDark) decrementMediaUsage(oldLogoDark);
-    if (newLogoDark) incrementMediaUsage(newLogoDark);
-  }
-  
-  // Sync certification arrays
-  const addedToCerts = newCerts.filter(url => !oldCerts.includes(url));
-  const removedFromCerts = oldCerts.filter(url => !newCerts.includes(url));
-  
-  addedToCerts.forEach(url => incrementMediaUsage(url));
-  removedFromCerts.forEach(url => decrementMediaUsage(url));
+
+  await syncDocMediaUsage('CompanyInfo', current, info);
 
   res.json({ success: true, data: info });
 };

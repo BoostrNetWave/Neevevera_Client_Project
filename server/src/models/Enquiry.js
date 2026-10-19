@@ -22,7 +22,7 @@ const enquirySchema = new mongoose.Schema(
     // ── Classification (enables single-inbox filtering) ────────
     type: {
       type: String,
-      enum: ['contact', 'rfq', 'vendor-rfq', 'general'],
+      enum: ['contact', 'rfq', 'vendor-rfq', 'general', 'service_inquiry'],
       default: 'contact',
     },
 
@@ -35,6 +35,8 @@ const enquirySchema = new mongoose.Schema(
     // ── Project / enquiry body ─────────────────────────────────
     pinCode:          { type: String, trim: true },
     serviceCategory:  String,
+    service:          { type: String, trim: true, maxlength: 120 },
+    module:           { type: String, trim: true, maxlength: 120 },
     projectScope:     { type: String, required: true, trim: true, maxlength: 2000 },
     budgetRange:      String,
     timeline:         String,

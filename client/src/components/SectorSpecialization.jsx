@@ -88,8 +88,9 @@ export const SectorSpecialization = () => {
               key={activeTab}
               src={data.img}
               alt={data.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-opacity duration-300"
               style={{ minHeight: '260px' }}
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#111822]/70 via-transparent to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 bg-[#07558F] text-white text-xs font-bold px-3 py-1 uppercase rounded-sm">

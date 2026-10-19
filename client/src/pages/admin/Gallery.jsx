@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import adminApi from '../../utils/adminApi';
 import MediaLibrary from '../../components/admin/MediaLibrary';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const CATEGORIES = [
   { value: 'construction-site', label: 'Construction Site' },

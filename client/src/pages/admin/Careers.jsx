@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import adminApi from '../../utils/adminApi';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const TYPES    = ['full-time', 'part-time', 'contract', 'freelance'];
 const APP_STAT = ['received', 'reviewed', 'shortlisted', 'rejected'];
@@ -273,16 +273,22 @@ const CareerEditor = ({ careerId, onBack, onSaved }) => {
 // APPLICATIONS VIEW
 // ═══════════════════════════════════════════════════════════════
 const ApplicationsView = ({ job, onBack }) => {
-  const [apps, setApps] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [apps, setApps] = useState(job.applications || []);
+  const [loading, setLoading] = useState(!job.applications || job.applications.length === 0);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    adminApi.get(`${API}/careers/${job.slug}/applications`)
-      .then(res => setApps(res.data.data))
-      .catch(() => setError('Failed to load applications.'))
+    adminApi.get(`/careers/${job.slug}/applications`)
+      .then(res => {
+        if (res.data?.data) setApps(res.data.data);
+      })
+      .catch(() => {
+        if (!job.applications || job.applications.length === 0) {
+          setError('Failed to load applications.');
+        }
+      })
       .finally(() => setLoading(false));
-  }, [job.slug]);
+  }, [job.slug, job.applications]);
 
   const updateStatus = async (appId, newStatus) => {
     try {

@@ -33,12 +33,27 @@ import rateLimit        from 'express-rate-limit';
 
 const app = express();
 
-// ── CORS — environment-aware origin whitelist ─────────────────
-const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:3000'];
+const PROD_ORIGINS = [
+  'https://www.neevevara.com',
+  'https://neevevara.com',
+];
+
+const DEV_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  ...PROD_ORIGINS,
+];
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : DEV_ORIGINS;
+
+// Always ensure live domains are whitelisted even if custom ALLOWED_ORIGINS is provided
+PROD_ORIGINS.forEach(origin => {
+  if (!ALLOWED_ORIGINS.includes(origin)) ALLOWED_ORIGINS.push(origin);
+});
 
 app.use(cors({
   origin(origin, callback) {
@@ -56,29 +71,31 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());                                // req.cookies for JWT auth
 
 // ── Rate limiters ─────────────────────────────────────────────
+const isDev = process.env.NODE_ENV !== 'production';
+
 /**
  * Global API limiter — all /api/* routes.
- * 200 requests per IP per 15 min window.
+ * Skipped in dev/test so administrative work, rapid edits, and local testing never hit 429 Too Many Requests.
  */
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: isDev ? 100000 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',   // disabled in test mode
+  skip: () => isDev,
   message: { success: false, message: 'Too many requests. Please try again later.' },
 });
 
 /**
  * Public write limiter — form submissions only.
- * 10 requests per IP per 15 min window (prevents form spam).
+ * 10 requests per IP per 15 min window in production.
  */
 const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 10000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',   // disabled in test mode
+  skip: () => isDev,
   message: { success: false, message: 'Too many submissions from your IP. Please wait a few minutes.' },
 });
 
@@ -139,11 +156,11 @@ app.use('/api/gallery',      galleryRoutes);
 app.use('/api/home',         homeContentRoutes);
 app.use('/api/search',       searchRoutes);
 
-// Public write — global + write rate limit (stricter)
-app.use('/api/enquiries',    writeLimiter, enquiryRoutes);
-app.use('/api/careers',      careerRoutes);          // GET is public; POST /apply has its own write limiter below
-app.use('/api/vendors',      writeLimiter, vendorRoutes);
-app.use('/api/newsletter',   writeLimiter, newsletterRoutes);
+// Public write endpoints have their own form-submission write limiters attached per-route
+app.use('/api/enquiries',    enquiryRoutes);
+app.use('/api/careers',      careerRoutes);
+app.use('/api/vendors',      vendorRoutes);
+app.use('/api/newsletter',   newsletterRoutes);
 
 import { uploadRouter, publicUploadRouter } from './routes/upload.routes.js';
 

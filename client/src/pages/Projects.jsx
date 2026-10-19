@@ -4,6 +4,8 @@ import { FiArrowRight, FiSearch, FiSliders, FiCheckCircle } from 'react-icons/fi
 import axios from 'axios'
 import { projects as mockProjects } from '../data/mockData'
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 const Projects = () => {
   const [selectedClassification, setSelectedClassification] = useState('ALL')
   const [selectedTerritory, setSelectedTerritory] = useState('ALL')
@@ -17,7 +19,7 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/projects?limit=100')
+        const res = await axios.get(`${API}/projects?limit=100`)
         if (res.data.success && res.data.items) {
           const liveData = res.data.items.map(p => ({
             id: p._id,

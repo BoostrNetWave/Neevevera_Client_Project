@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { SectorSpecialization } from '../components/SectorSpecialization';
 import {
@@ -11,24 +11,79 @@ import {
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Home = () => {
+  const location = useLocation();
   const [homeData, setHomeData] = useState(null);
+  const [companyInfo, setCompanyInfo] = useState(null);
   const [liveServices, setLiveServices] = useState([]);
   const [liveProjects, setLiveProjects] = useState([]);
   const [liveTestimonials, setLiveTestimonials] = useState([]);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const aboutRef = useRef(null);
+  const servicesRef = useRef(null);
+  const projectsRef = useRef(null);
+  const capabilitiesRef = useRef(null);
+  const processRef = useRef(null);
+  const galleryRef = useRef(null);
+  const leadershipRef = useRef(null);
+  const contactRef = useRef(null);
+
+  const scrollToSection = (ref) => {
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // ── Smooth Scroll to Section via useRef when URL contains hash ──
+  useEffect(() => {
+    const hash = location.hash ? location.hash.replace('#', '').toLowerCase() : '';
+    const refMap = {
+      about: aboutRef,
+      services: servicesRef,
+      portfolio: projectsRef,
+      projects: projectsRef,
+      capabilities: capabilitiesRef,
+      process: processRef,
+      gallery: galleryRef,
+      team: leadershipRef,
+      leadership: leadershipRef,
+      contact: contactRef,
+    };
+
+    if (hash && refMap[hash]) {
+      // First attempt after initial render
+      const t1 = setTimeout(() => {
+        if (refMap[hash]?.current) {
+          refMap[hash].current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 400);
+      // Retry after data likely finishes loading (API + render cycle)
+      const t2 = setTimeout(() => {
+        if (refMap[hash]?.current) {
+          refMap[hash].current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 1400);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    } else if (!location.hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [location.hash]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     const fetchAllData = async () => {
       try {
-        const [homeRes, svcRes, prjRes, tstRes] = await Promise.all([
+        const [homeRes, svcRes, prjRes, tstRes, compRes] = await Promise.all([
           axios.get(`${API}/home`).catch(() => ({ data: {} })),
           axios.get(`${API}/services?limit=10`).catch(() => ({ data: {} })),
           axios.get(`${API}/projects?limit=10`).catch(() => ({ data: {} })),
           axios.get(`${API}/testimonials?limit=10`).catch(() => ({ data: {} })),
+          axios.get(`${API}/company`).catch(() => ({ data: {} })),
         ]);
 
         if (homeRes.data?.success && homeRes.data?.data) {
           setHomeData(homeRes.data.data);
+        }
+        if (compRes.data?.success && compRes.data?.data) {
+          setCompanyInfo(compRes.data.data);
         }
         if (svcRes.data?.success) {
           const items = svcRes.data.items || svcRes.data.data || [];
@@ -92,14 +147,9 @@ const Home = () => {
       ].slice(0, 6)
     : baseServices.slice(0, 6);
 
-  // Filter live projects: skip ones with known-bad test Cloudinary uploads (si4gj9xf7kbspozye5pe)
-  const validLiveProjects = liveProjects.filter(p =>
-    !p.coverImage || !p.coverImage.includes('si4gj9xf7kbspozye5pe')
-  );
-
   const baseProjects = [
-    ...validLiveProjects,
-    ...mockProjects.filter(mock => !validLiveProjects.some(live => live.slug === mock.slug))
+    ...liveProjects,
+    ...mockProjects.filter(mock => !liveProjects.some(live => live.slug === mock.slug))
   ];
   const featuredProjIds = (homeData?.featuredProjectIds || []).map(id => (typeof id === 'object' && id?._id) ? String(id._id) : String(id));
   const allProjects = (featuredProjIds.length > 0)
@@ -113,13 +163,16 @@ const Home = () => {
     ...liveTestimonials,
     ...mockTestimonials.filter(mock => !liveTestimonials.some(live => (live.clientName || live.name) === (mock.clientName || mock.name)))
   ];
-
-  const p1 = allProjects[0] || mockProjects[0];
-  const p2 = allProjects[1] || mockProjects[1];
-  const p3 = allProjects[2] || mockProjects[2];
+  const filteredProjects = activeFilter === 'all'
+  ? allProjects
+  : allProjects.filter(p => 
+      (p.category || '').toLowerCase().includes(activeFilter.toLowerCase())
+    );
 
   const t1 = allTestimonials[0] || mockTestimonials[0];
   const t2 = allTestimonials[1] || mockTestimonials[1];
+  const projectCategories = ['all', 'residential', 'commercial', 'industrial', 'infrastructure', 'government'];
+
 
   return (
     <main className="w-full flex-1">
@@ -172,7 +225,7 @@ const Home = () => {
 {/* Hero Image Column */}
 <div className="lg:col-span-7 relative">
 <div className="relative bg-white border border-border-neutral overflow-hidden rounded-sm shadow-sm">
-<img alt="Neevevera Active Infrastructure Civil Engineering Site" className="w-full h-[400px] lg:h-[520px] object-cover filter contrast-[1.02]" src={homeData?.heroImage || "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80"} onError={e => { e.target.onerror=null; e.target.src='/images/client_hero.webp'; }}/>
+<img alt="Neevevera Active Infrastructure Civil Engineering Site" className="w-full h-[400px] lg:h-[520px] object-cover filter contrast-[1.02]" src={homeData?.heroImage || "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80"} loading="eager" onError={e => { e.target.onerror=null; e.target.src='/images/client_hero.webp'; }}/>
 <div className="absolute inset-0 bg-gradient-to-t from-graphite/80 via-transparent to-transparent pointer-events-none"></div>
 {/* Top Discreet Badge with Logo Red accent */}
 <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm border border-border-neutral px-3 py-1.5 flex items-center gap-2 rounded-sm">
@@ -194,38 +247,67 @@ const Home = () => {
 </div>
 </div>
 </section>
-{/* METRICS STRIP -- driven by homeData.stats from CMS */}
-{(() => {
-  const borderColors = ['border-brand-blue','border-brand-green','border-brand-gold','border-border-neutral'];
-  const textColors   = ['text-graphite','text-brand-green','text-brand-gold','text-graphite'];
-  const mockStats = [
-    { value: 'XX', suffix: '+', label: 'Projects Delivered' },
-    { value: 'XX', suffix: '+', label: 'Years of Leadership' },
-    { value: 'XX', suffix: '+', label: 'Field Specialists' },
-    { value: '03', suffix: '',  label: 'Regional Command Hubs' },
-  ];
-  const displayStats = (homeData && homeData.stats && homeData.stats.length > 0)
-    ? homeData.stats
-    : mockStats;
-  return (
-    <section className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
-          {displayStats.map((stat, i) => (
-            <div key={i} className={`border-l-2 ${borderColors[i % borderColors.length]} pl-4 space-y-1`}>
-              <span className={`font-display text-3xl lg:text-4xl font-extrabold ${textColors[i % textColors.length]}`}>
-                {stat.value}{stat.suffix}
-              </span>
-              <div className="text-[12px] text-soft-grey uppercase font-semibold">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+{/* METRICS STRIP -- driven by homeData.stats from CMS */}
+
+{(() => {
+
+  const borderColors = ['border-brand-blue','border-brand-green','border-brand-gold','border-border-neutral'];
+
+  const textColors   = ['text-graphite','text-brand-green','text-brand-gold','text-graphite'];
+
+  const mockStats = [
+
+    { value: 'XX', suffix: '+', label: 'Projects Delivered' },
+
+    { value: 'XX', suffix: '+', label: 'Years of Leadership' },
+
+    { value: 'XX', suffix: '+', label: 'Field Specialists' },
+
+    { value: '03', suffix: '',  label: 'Regional Command Hubs' },
+
+  ];
+
+  const displayStats = (homeData && homeData.stats && homeData.stats.length > 0)
+
+    ? homeData.stats
+
+    : mockStats;
+
+  return (
+
+    <section className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-8">
+
+      <div className="max-w-7xl mx-auto">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
+
+          {displayStats.map((stat, i) => (
+
+            <div key={i} className={`border-l-2 ${borderColors[i % borderColors.length]} pl-4 space-y-1`}>
+
+              <span className={`font-display text-3xl lg:text-4xl font-extrabold ${textColors[i % textColors.length]}`}>
+
+                {stat.value}{stat.suffix}
+
+              </span>
+
+              <div className="text-[12px] text-soft-grey uppercase font-semibold">{stat.label}</div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </div>
+
+    </section>
+
+  );
+
 })()}
 {/* 01 ABOUT US & LEADERSHIP */}
-<section className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="about">
+<section ref={aboutRef} className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="about">
 <div className="max-w-7xl mx-auto space-y-14"><div className="space-y-12"><div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start"><div className="lg:col-span-7 space-y-6">
   <div className="text-xs font-bold text-brand-blue uppercase tracking-wider">{homeData?.whyChooseUsTitle || '01 ABOUT US'}</div>
   <h2 className="font-display text-3xl lg:text-4xl text-graphite tracking-tight font-extrabold uppercase leading-tight">
@@ -250,14 +332,131 @@ const Home = () => {
       </>
     )}
   </div>
-</div><div className="lg:col-span-5 bg-white border border-border-neutral p-6 lg:p-8 space-y-5 rounded-sm shadow-sm"><div className="flex items-center justify-between border-b border-border-neutral pb-3"><span className="text-xs text-brand-blue font-bold uppercase tracking-wider">Leadership Profile</span><span className="w-2 h-2 rounded-full bg-brand-green"></span></div><div><h3 className="font-display text-2xl font-extrabold text-graphite uppercase">Pankaj Kumar Rungta</h3><p className="text-xs text-brand-blue font-semibold uppercase pt-1">Director • Neevevera Private Limited</p></div><div className="bg-surface-muted p-4 space-y-2 border-l-2 border-brand-blue rounded-r-sm"><span className="text-[11px] text-soft-grey uppercase font-semibold">Technical Credentials &amp; Charter</span><p className="font-display text-sm text-graphite font-bold">BE (Civil), MIE, Chart Eng.</p><p className="text-xs text-soft-grey leading-relaxed">MIBC • MIOV • MIRC • PBMC Regd. Professional Civil &amp; Structural Engineer</p></div><p className="text-xs text-soft-grey leading-relaxed">Provides direct technical governance across project engineering, material testing programs, foundation stability, and statutory compliance across all operating regions.</p><div className="pt-2"><a className="inline-flex items-center gap-2 text-xs uppercase font-bold text-brand-blue hover:text-brand-blue-hover transition-colors" href="#contact"><span>Consult Leadership</span><span className="material-symbols-outlined text-[15px]">arrow_forward</span></a></div></div></div><div className="border-t border-border-neutral pt-10"><div className="text-xs font-bold text-brand-blue uppercase tracking-wider mb-6">CORPORATE PILLARS &amp; CHARTER</div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-blue uppercase">Mission</span><span className="material-symbols-outlined text-soft-grey text-lg">flag</span></div><p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">[CLIENT CONTENT PENDING — Formal Mission Statement to be Provided by Executive Board]</p></div><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-green uppercase">Vision</span><span className="material-symbols-outlined text-soft-grey text-lg">visibility</span></div><p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">[CLIENT CONTENT PENDING — Long-Term Vision Framework to be Provided by Executive Board]</p></div><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-gold uppercase">Company History</span><span className="material-symbols-outlined text-soft-grey text-lg">history_edu</span></div><p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">[CLIENT CONTENT PENDING — Detailed Founding Chronology and Milestones to be Provided]</p></div><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-blue uppercase">Core Values</span><span className="material-symbols-outlined text-soft-grey text-lg">verified</span></div><p className="text-xs text-graphite font-medium leading-relaxed">Integrity, Engineering Rigor, Safety Governance, Client Partnership, and Code Adherence.</p></div><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-green uppercase">Certifications</span><span className="material-symbols-outlined text-soft-grey text-lg">workspace_premium</span></div><p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">[CLIENT CONTENT PENDING — ISO / Regulatory Certification Registry under review]</p></div><div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm"><div className="flex items-center justify-between"><span className="text-xs font-bold text-brand-gold uppercase">Awards &amp; Recognition</span><span className="material-symbols-outlined text-soft-grey text-lg">military_tech</span></div><p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">[CLIENT CONTENT PENDING — Regional Industry Citations to be updated]</p></div></div></div></div></div>
+</div><div className="lg:col-span-5 bg-white border border-border-neutral p-6 lg:p-8 space-y-5 rounded-sm shadow-sm"><div className="flex items-center justify-between border-b border-border-neutral pb-3"><span className="text-xs text-brand-blue font-bold uppercase tracking-wider">Leadership Profile</span><span className="w-2 h-2 rounded-full bg-brand-green"></span></div><div><h3 className="font-display text-2xl font-extrabold text-graphite uppercase">Pankaj Kumar Rungta</h3><p className="text-xs text-brand-blue font-semibold uppercase pt-1">Director • Neevevera Private Limited</p></div><div className="bg-surface-muted p-4 space-y-2 border-l-2 border-brand-blue rounded-r-sm"><span className="text-[11px] text-soft-grey uppercase font-semibold">Technical Credentials &amp; Charter</span><p className="font-display text-sm text-graphite font-bold">BE (Civil), MIE, Chart Eng.</p><p className="text-xs text-soft-grey leading-relaxed">MIBC • MIOV • MIRC • PBMC Regd. Professional Civil &amp; Structural Engineer</p></div><p className="text-xs text-soft-grey leading-relaxed">Provides direct technical governance across project engineering, material testing programs, foundation stability, and statutory compliance across all operating regions.</p><div className="pt-2"><a className="inline-flex items-center gap-2 text-xs uppercase font-bold text-brand-blue hover:text-brand-blue-hover transition-colors" href="#contact"><span>Consult Leadership</span><span className="material-symbols-outlined text-[15px]">arrow_forward</span></a></div></div></div><div className="border-t border-border-neutral pt-10">
+  <div className="text-xs font-bold text-brand-blue uppercase tracking-wider mb-6">CORPORATE PILLARS &amp; CHARTER</div>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {/* 1. Mission */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-blue uppercase">Mission</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">flag</span>
+      </div>
+      <p className={`text-xs leading-relaxed bg-surface-warm p-3 border border-border-neutral rounded-sm ${companyInfo?.mission ? 'text-graphite font-medium' : 'text-soft-grey italic'}`}>
+        {companyInfo?.mission || '[CLIENT CONTENT PENDING — Formal Mission Statement to be Provided by Executive Board]'}
+      </p>
+    </div>
+
+    {/* 2. Vision */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-green uppercase">Vision</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">visibility</span>
+      </div>
+      <p className={`text-xs leading-relaxed bg-surface-warm p-3 border border-border-neutral rounded-sm ${companyInfo?.vision ? 'text-graphite font-medium' : 'text-soft-grey italic'}`}>
+        {companyInfo?.vision || '[CLIENT CONTENT PENDING — Long-Term Vision Framework to be Provided by Executive Board]'}
+      </p>
+    </div>
+
+    {/* 3. Company History */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-gold uppercase">Company History</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">history_edu</span>
+      </div>
+      <p className={`text-xs leading-relaxed bg-surface-warm p-3 border border-border-neutral rounded-sm ${companyInfo?.history ? 'text-graphite font-medium' : 'text-soft-grey italic'}`}>
+        {companyInfo?.history || '[CLIENT CONTENT PENDING — Detailed Founding Chronology and Milestones to be Provided]'}
+      </p>
+    </div>
+
+    {/* 4. Core Values */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-blue uppercase">Core Values</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">verified</span>
+      </div>
+      {companyInfo?.values && companyInfo.values.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {companyInfo.values.map((v, i) => (
+            <span key={i} className="inline-block px-2.5 py-1 text-xs font-semibold bg-surface-warm border border-border-neutral rounded-sm text-graphite">
+              {typeof v === 'string' ? v : (v.title || '')}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-graphite font-medium leading-relaxed">
+          Integrity, Engineering Rigor, Safety Governance, Client Partnership, and Code Adherence.
+        </p>
+      )}
+    </div>
+
+    {/* 5. Certifications */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-green uppercase">Certifications</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">workspace_premium</span>
+      </div>
+      {companyInfo?.certifications && companyInfo.certifications.length > 0 ? (
+        <div className="space-y-2 pt-1">
+          {companyInfo.certifications.map((c, i) => (
+            <div key={i} className="flex items-center gap-3 p-2 bg-surface-warm border border-border-neutral rounded-sm">
+              {c.imageUrl && (
+                <img src={c.imageUrl} alt={c.name} className="w-10 h-10 object-cover rounded-sm border border-border-neutral shrink-0" />
+              )}
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-graphite truncate">{c.name}</div>
+                <div className="text-[11px] text-soft-grey">
+                  {c.issuedBy && <span>Issued by {c.issuedBy}</span>}
+                  {c.year && <span> · {c.year}</span>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">
+          [CLIENT CONTENT PENDING — ISO / Regulatory Certification Registry under review]
+        </p>
+      )}
+    </div>
+
+    {/* 6. Awards & Recognition */}
+    <div className="bg-white border border-border-neutral p-5 space-y-2 rounded-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-brand-gold uppercase">Awards &amp; Recognition</span>
+        <span className="material-symbols-outlined text-soft-grey text-lg">military_tech</span>
+      </div>
+      {companyInfo?.awards && companyInfo.awards.length > 0 ? (
+        <div className="space-y-2 pt-1">
+          {companyInfo.awards.map((a, i) => (
+            <div key={i} className="flex items-center gap-3 p-2 bg-surface-warm border border-border-neutral rounded-sm">
+              {a.imageUrl && (
+                <img src={a.imageUrl} alt={a.title} className="w-10 h-10 object-cover rounded-sm border border-border-neutral shrink-0" />
+              )}
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-graphite truncate">{a.title}</div>
+                <div className="text-[11px] text-soft-grey">
+                  {a.issuedBy && <span>{a.issuedBy}</span>}
+                  {a.year && <span> · {a.year}</span>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-soft-grey leading-relaxed italic bg-surface-warm p-3 border border-border-neutral rounded-sm">
+          [CLIENT CONTENT PENDING — Regional Industry Citations to be updated]
+        </p>
+      )}
+    </div>
+  </div>
+</div></div></div>
 </section>
 {/* 02 FEATURED PROJECT SHOWCASE */}
-<section className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="services"><div className="max-w-7xl mx-auto space-y-12"><div className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-border-neutral pb-4"><div><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">OUR SERVICES</span><h2 className="font-display text-3xl lg:text-4xl font-extrabold text-graphite uppercase">COMPREHENSIVE ENGINEERING &amp; CONSTRUCTION SERVICES</h2></div><p className="text-xs text-soft-grey max-w-md">Turnkey execution, statutory precision, and licensed civil governance delivered across Eastern India.</p></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<section ref={servicesRef} className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="services"><div className="max-w-7xl mx-auto space-y-12"><div className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-border-neutral pb-4"><div><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">OUR SERVICES</span><h2 className="font-display text-3xl lg:text-4xl font-extrabold text-graphite uppercase">COMPREHENSIVE ENGINEERING &amp; CONSTRUCTION SERVICES</h2></div><p className="text-xs text-soft-grey max-w-md">Turnkey execution, statutory precision, and licensed civil governance delivered across Eastern India.</p></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {allServices.map((service, idx) => (
     <div key={service.id || service._id || idx} className="bg-surface-warm border border-border-neutral rounded-sm flex flex-col justify-between overflow-hidden shadow-sm hover:border-brand-blue transition-colors">
       <div className="h-44 overflow-hidden relative">
-        <img alt={service.title} className="w-full h-full object-cover" src={service.image || service.coverImage || '/images/client_commercial.webp'} onError={e => { e.target.onerror=null; e.target.src='/images/client_commercial.webp'; }} />
+        <img alt={service.title} className="w-full h-full object-cover" src={service.image || service.coverImage || '/images/client_commercial.webp'} loading="lazy" onError={e => { e.target.onerror=null; e.target.src='/images/client_commercial.webp'; }} />
         <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 text-[11px] font-bold text-brand-blue uppercase rounded-sm">Service {String(idx + 1).padStart(2, '0')}</div>
       </div>
       <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
@@ -290,7 +489,7 @@ const Home = () => {
 </div>
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-surface-warm border border-border-neutral overflow-hidden rounded-sm shadow-sm">
 <div className="lg:col-span-7 relative group overflow-hidden min-h-[380px] lg:min-h-[460px]">
-<img alt="High-Rise Commercial Tower" className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500" src="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1200&q=80"/>
+<img alt="High-Rise Commercial Tower" className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500" src="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1200&q=80" loading="lazy"/>
 <div className="absolute bottom-3 left-3 bg-graphite/85 backdrop-blur-md px-3 py-1 text-xs text-white rounded-sm">
               Eastern Regional Commercial Hub
             </div>
@@ -334,7 +533,7 @@ const Home = () => {
 </div>
 </section>
 {/* 03 OUR PROJECTS (Asymmetric Project Index) */}
-<section className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="portfolio">
+<section ref={projectsRef} className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="portfolio">
 <div className="max-w-7xl mx-auto space-y-10">
 <div className="flex flex-col md:flex-row justify-between md:items-end gap-5">
 <div>
@@ -343,90 +542,163 @@ const Home = () => {
 </div>
 {/* Clean Category Filter Tabs */}
 <div className="flex flex-wrap items-center gap-1.5 text-xs bg-white p-1 border border-border-neutral rounded-sm" id="project-filter-bar">
-<button className="filter-btn px-3.5 py-1.5 bg-brand-blue text-white uppercase font-bold rounded-sm transition-colors" data-filter="all">ALL</button>
-<button className="filter-btn px-3.5 py-1.5 text-soft-grey hover:text-graphite uppercase font-medium rounded-sm transition-colors" data-filter="residential">RESIDENTIAL</button>
-<button className="filter-btn px-3.5 py-1.5 text-soft-grey hover:text-graphite uppercase font-medium rounded-sm transition-colors" data-filter="commercial">COMMERCIAL</button>
-<button className="filter-btn px-3.5 py-1.5 text-soft-grey hover:text-graphite uppercase font-medium rounded-sm transition-colors" data-filter="industrial">INDUSTRIAL</button>
-<button className="filter-btn px-3.5 py-1.5 text-soft-grey hover:text-graphite uppercase font-medium rounded-sm transition-colors" data-filter="infrastructure">INFRASTRUCTURE</button>
-<button className="filter-btn px-3.5 py-1.5 text-soft-grey hover:text-graphite uppercase font-medium rounded-sm transition-colors" data-filter="government">GOVERNMENT</button>
+  {projectCategories.map((cat) => (
+    <button
+      key={cat}
+      onClick={() => setActiveFilter(cat)}
+      className={`filter-btn px-3.5 py-1.5 uppercase rounded-sm transition-colors ${
+        activeFilter === cat
+          ? 'bg-brand-blue text-white font-bold'
+          : 'text-soft-grey hover:text-graphite font-medium'
+      }`}
+    >
+      {cat}
+    </button>
+  ))}
 </div>
+
 </div>
-{/* Asymmetric Cards Grid */}
+{/* Dynamic Responsive Projects Grid */}
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch" id="projects-grid">
-{/* Card 1: Main Featured Project (7 Cols) */}
-<div className="project-item lg:col-span-7 bg-white border border-border-neutral flex flex-col justify-between group overflow-hidden rounded-sm shadow-sm" data-category="infrastructure government">
-<div className="relative overflow-hidden h-[300px] lg:h-[380px]">
-<img alt={p1.title || p1.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src={p1.coverImage || p1.image || 'https://images.unsplash.com/photo-1558024920-b41e1887dc32?auto=format&fit=crop&w=1000&q=80'}/>
-<div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-border-neutral px-2.5 py-1 rounded-sm">
-<span className="text-xs text-brand-blue font-bold uppercase">{p1.category || 'Infrastructure • Heavy Civil'}</span>
-</div>
-<div className="absolute bottom-3 right-3 bg-brand-green text-white px-2.5 py-1 text-xs uppercase font-medium rounded-sm">
-  {p1.status || 'Active Execution'}
-</div>
-</div>
-<div className="p-6 space-y-3">
-<div className="flex items-center justify-between text-xs">
-<span className="text-soft-grey uppercase font-medium">{p1.client || p1.clientName || 'State Highway Corridor'}</span>
-<span className="text-brand-blue font-bold">{p1.location || 'Odisha Region'}</span>
-</div>
-<h3 className="font-display text-xl font-bold text-graphite uppercase">
-  {p1.title || p1.name}
-</h3>
-<p className="text-xs text-soft-grey leading-relaxed">
-  {p1.shortDescription || (p1.description ? p1.description.substring(0, 120) + '...' : 'Subgrade pier casting, heavy girder launching, and composite concrete slab bridge spans for high-volume regional transit connectivity.')}
-</p>
-<div className="pt-2 border-t border-border-neutral flex items-center justify-between text-xs">
-<span className="text-soft-grey">{p1.spec || (p1.specs?.[0]?.value) || 'Prestressed Girder Architecture'}</span>
-<Link className="uppercase font-bold text-brand-blue hover:text-brand-blue-hover inline-flex items-center gap-1 transition-colors" to={p1.slug ? '/projects/' + p1.slug : '#portfolio'}>
-<span>View Project Dossier</span>
-<span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-</Link>
-</div>
-</div>
-</div>
+  {filteredProjects.length === 0 ? (
+    <div className="col-span-12 py-12 text-center bg-white border border-border-neutral p-8 rounded-sm">
+      <p className="text-sm font-semibold text-graphite uppercase">No projects currently listed under this sector.</p>
+      <p className="text-xs text-soft-grey mt-1">Dossiers for completed regional undertakings can be requested directly.</p>
+      <button onClick={() => setActiveFilter('all')} className="mt-4 px-4 py-2 bg-brand-blue text-white text-xs font-bold uppercase rounded-sm hover:bg-brand-blue-hover transition-colors">
+        View All Sectors
+      </button>
+    </div>
+  ) : filteredProjects.length === 1 ? (
+    /* Single Filtered Project: Full width hero without white space */
+    <div className="lg:col-span-12 bg-white border border-border-neutral grid grid-cols-1 lg:grid-cols-12 overflow-hidden rounded-sm shadow-sm group">
+      <div className="lg:col-span-7 relative overflow-hidden h-[300px] lg:h-[400px]">
+        <img alt={filteredProjects[0].title || filteredProjects[0].name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" src={filteredProjects[0].coverImage || filteredProjects[0].image || '/images/client_hero.webp'}/>
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-border-neutral px-2.5 py-1 rounded-sm">
+          <span className="text-xs text-brand-blue font-bold uppercase">{filteredProjects[0].category}</span>
+        </div>
+        <div className="absolute bottom-3 right-3 bg-brand-green text-white px-2.5 py-1 text-xs uppercase font-medium rounded-sm">
+          {filteredProjects[0].status || 'Active Execution'}
+        </div>
+      </div>
+      <div className="lg:col-span-5 p-6 lg:p-8 flex flex-col justify-between space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-soft-grey uppercase font-medium">{filteredProjects[0].client || filteredProjects[0].clientName || 'Client Entity'}</span>
+            <span className="text-brand-blue font-bold">{filteredProjects[0].location || 'Odisha Region'}</span>
+          </div>
+          <h3 className="font-display text-2xl font-bold text-graphite uppercase">
+            {filteredProjects[0].title || filteredProjects[0].name}
+          </h3>
+          <p className="text-xs sm:text-sm text-soft-grey leading-relaxed">
+            {filteredProjects[0].description || filteredProjects[0].shortDescription}
+          </p>
+        </div>
+        <div className="pt-4 border-t border-border-neutral flex items-center justify-between text-xs">
+          <span className="text-soft-grey font-medium">{filteredProjects[0].spec || filteredProjects[0].specs?.[0]?.value || 'Structural Specification'}</span>
+          <Link className="uppercase font-bold text-brand-blue hover:text-brand-blue-hover inline-flex items-center gap-1 transition-colors" to={filteredProjects[0].slug ? '/projects/' + filteredProjects[0].slug : '#portfolio'}>
+            <span>View Full Dossier</span>
+            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  ) : filteredProjects.length === 2 ? (
+    /* Two Filtered Projects: Balanced 6-col cards side-by-side */
+    <>
+      {filteredProjects.map((proj) => (
+        <div key={proj.slug || proj.id} className="lg:col-span-6 bg-white border border-border-neutral flex flex-col justify-between group overflow-hidden rounded-sm shadow-sm">
+          <div className="relative overflow-hidden h-[260px]">
+            <img alt={proj.title || proj.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" src={proj.coverImage || proj.image || '/images/client_hero.webp'}/>
+            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-border-neutral px-2.5 py-1 rounded-sm">
+              <span className="text-xs text-brand-blue font-bold uppercase">{proj.category}</span>
+            </div>
+            <div className="absolute bottom-3 right-3 bg-brand-green text-white px-2.5 py-1 text-xs uppercase font-medium rounded-sm">
+              {proj.status || 'Active Execution'}
+            </div>
+          </div>
+          <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-soft-grey uppercase font-medium">{proj.client || proj.clientName}</span>
+                <span className="text-brand-blue font-bold">{proj.location}</span>
+              </div>
+              <h3 className="font-display text-lg font-bold text-graphite uppercase">
+                {proj.title || proj.name}
+              </h3>
+              <p className="text-xs text-soft-grey leading-relaxed line-clamp-3">
+                {proj.shortDescription || proj.description}
+              </p>
+            </div>
+            <div className="pt-3 border-t border-border-neutral flex items-center justify-between text-xs">
+              <span className="text-soft-grey">{proj.spec || proj.specs?.[0]?.value || 'Structural Specification'}</span>
+              <Link className="uppercase font-bold text-brand-blue hover:text-brand-blue-hover inline-flex items-center gap-1 transition-colors" to={proj.slug ? '/projects/' + proj.slug : '#portfolio'}>
+                <span>View Dossier →</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  ) : (
+    /* 3+ Projects: 7-col featured + two 5-col side cards, strictly from filtered results */
+    <>
+      <div className="project-item lg:col-span-7 bg-white border border-border-neutral flex flex-col justify-between group overflow-hidden rounded-sm shadow-sm">
+        <div className="relative overflow-hidden h-[280px] lg:h-[360px]">
+          <img alt={filteredProjects[0].title || filteredProjects[0].name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" src={filteredProjects[0].coverImage || filteredProjects[0].image || '/images/client_hero.webp'}/>
+          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-border-neutral px-2.5 py-1 rounded-sm">
+            <span className="text-xs text-brand-blue font-bold uppercase">{filteredProjects[0].category}</span>
+          </div>
+          <div className="absolute bottom-3 right-3 bg-brand-green text-white px-2.5 py-1 text-xs uppercase font-medium rounded-sm">
+            {filteredProjects[0].status || 'Active Execution'}
+          </div>
+        </div>
+        <div className="p-6 space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-soft-grey uppercase font-medium">{filteredProjects[0].client || filteredProjects[0].clientName || 'State Highway Corridor'}</span>
+            <span className="text-brand-blue font-bold">{filteredProjects[0].location || 'Odisha Region'}</span>
+          </div>
+          <h3 className="font-display text-xl font-bold text-graphite uppercase">
+            {filteredProjects[0].title || filteredProjects[0].name}
+          </h3>
+          <p className="text-xs text-soft-grey leading-relaxed">
+            {filteredProjects[0].shortDescription || filteredProjects[0].description}
+          </p>
+          <div className="pt-2 border-t border-border-neutral flex items-center justify-between text-xs">
+            <span className="text-soft-grey">{filteredProjects[0].spec || filteredProjects[0].specs?.[0]?.value || 'Structural Specification'}</span>
+            <Link className="uppercase font-bold text-brand-blue hover:text-brand-blue-hover inline-flex items-center gap-1 transition-colors" to={filteredProjects[0].slug ? '/projects/' + filteredProjects[0].slug : '#portfolio'}>
+              <span>View Project Dossier</span>
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
-{/* Stacked Right Cards (5 Cols) */}
-<div className="lg:col-span-5 flex flex-col gap-6 justify-between">
-{/* Card 2: Commercial Project */}
-<div className="project-item bg-white border border-border-neutral flex flex-col sm:flex-row group overflow-hidden rounded-sm shadow-sm" data-category="commercial residential">
-<div className="sm:w-2/5 h-48 sm:h-auto overflow-hidden">
-<img alt={p2.title || p2.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src={p2.coverImage || p2.image || 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80'}/>
-</div>
-<div className="sm:w-3/5 p-5 flex flex-col justify-between space-y-2">
-<div>
-<span className="text-[11px] text-brand-blue font-bold uppercase">{p2.category || 'Commercial Architecture'}</span>
-<h4 className="font-display text-base font-bold text-graphite uppercase pt-1">{p2.title || p2.name}</h4>
-<p className="text-xs text-soft-grey pt-1">{p2.shortDescription || (p2.description ? p2.description.substring(0, 90) + '...' : 'Coffered slab architecture, double-height exposed concrete, and glazed curtain wall structures.')}</p>
-</div>
-<div className="pt-2 border-t border-border-neutral flex items-center justify-between text-xs">
-<span className="text-brand-green font-medium">{p2.status || 'Completed'}</span>
-<Link className="font-bold text-brand-blue hover:text-brand-blue-hover uppercase" to={p2.slug ? '/projects/' + p2.slug : '#portfolio'}>Details →</Link>
-</div>
-</div>
-</div>
-
-{/* Card 3: Industrial Foundation Project */}
-<div className="project-item bg-white border border-border-neutral flex flex-col sm:flex-row group overflow-hidden rounded-sm shadow-sm" data-category="industrial infrastructure">
-<div className="sm:w-2/5 h-48 sm:h-auto overflow-hidden">
-<img alt={p3.title || p3.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src={p3.coverImage || p3.image || 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=800&q=80'}/>
-</div>
-<div className="sm:w-3/5 p-5 flex flex-col justify-between space-y-2">
-<div>
-<span className="text-[11px] text-brand-gold font-bold uppercase">{p3.category || 'Industrial Foundation • QA'}</span>
-<h4 className="font-display text-base font-bold text-graphite uppercase pt-1">{p3.title || p3.name}</h4>
-<p className="text-xs text-soft-grey pt-1">{p3.shortDescription || (p3.description ? p3.description.substring(0, 90) + '...' : 'Heavy mat raft reinforcement built for vibration-sensitive industrial manufacturing equipment.')}</p>
-</div>
-<div className="pt-2 border-t border-border-neutral flex items-center justify-between text-xs">
-<span className="text-soft-grey">{p3.status || 'Controlled Quality'}</span>
-<Link className="font-bold text-brand-blue hover:text-brand-blue-hover uppercase" to={p3.slug ? '/projects/' + p3.slug : '#portfolio'}>Details →</Link>
-</div>
-</div>
-</div>
-</div>
+      <div className="lg:col-span-5 flex flex-col gap-6">
+        {filteredProjects.slice(1, 3).map((proj) => (
+          <div key={proj.slug || proj.id} className="project-item bg-white border border-border-neutral flex flex-col sm:flex-row group overflow-hidden rounded-sm shadow-sm flex-1">
+            <div className="sm:w-2/5 h-44 sm:h-auto overflow-hidden">
+              <img alt={proj.title || proj.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" src={proj.coverImage || proj.image || '/images/client_commercial.webp'}/>
+            </div>
+            <div className="sm:w-3/5 p-5 flex flex-col justify-between space-y-2">
+              <div>
+                <span className="text-[11px] text-brand-blue font-bold uppercase">{proj.category}</span>
+                <h4 className="font-display text-base font-bold text-graphite uppercase pt-1 leading-snug">{proj.title || proj.name}</h4>
+                <p className="text-xs text-soft-grey pt-1 line-clamp-2">{proj.shortDescription || proj.description}</p>
+              </div>
+              <div className="pt-2 border-t border-border-neutral flex items-center justify-between text-xs">
+                <span className="text-brand-green font-medium">{proj.status || 'Active'}</span>
+                <Link className="font-bold text-brand-blue hover:text-brand-blue-hover uppercase" to={proj.slug ? '/projects/' + proj.slug : '#portfolio'}>Details →</Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
 </div></div>
 </section>
 {/* 04 CAPABILITIES (8 Core PRD Divisions) */}
-<section className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="capabilities">
+<section ref={capabilitiesRef} className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="capabilities">
 <div className="max-w-7xl mx-auto space-y-12">
 <div className="max-w-3xl space-y-3">
 <span className="text-xs text-brand-blue uppercase font-bold tracking-wider">04 CAPABILITIES</span>
@@ -512,7 +784,7 @@ const Home = () => {
 </div>
 </section>
 {/* 05 HOW WE WORK (5-Stage Discipline) */}
-<section className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24">
+<section ref={processRef} className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="process">
 <div className="max-w-7xl mx-auto space-y-12">
 <div className="space-y-3">
 <span className="text-xs text-brand-blue uppercase font-bold tracking-wider">05 HOW WE WORK</span>
@@ -597,7 +869,7 @@ const Home = () => {
 </section>
 {/* 06 SECTORS (Interactive Specialization Tabs) */}\n<SectorSpecialization />\n{/* 07 RESOURCE NETWORK & PIN CODE AUDITOR */}
 {/* 08 FIELD GALLERY & 10 TESTIMONIALS */}
-<section className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24">
+<section ref={galleryRef} className="w-full bg-surface-white border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="gallery">
 <div className="max-w-7xl mx-auto space-y-16">
 {/* 08 FIELD GALLERY */}
 <div className="space-y-6">
@@ -621,7 +893,7 @@ const Home = () => {
 </div>
 <div className="bg-surface-warm border border-border-neutral overflow-hidden rounded-sm group">
 <div className="h-48 overflow-hidden">
-<img alt="Foundation Rebar Cage Inspection" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=800&q=80"/>
+<img alt="Foundation Rebar Cage Inspection" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=800&q=80" loading="lazy"/>
 </div>
 <div className="p-3.5 space-y-1">
 <span className="text-[11px] font-bold text-brand-green uppercase">Quality Assurance</span>
@@ -631,7 +903,7 @@ const Home = () => {
 </div>
 <div className="bg-surface-warm border border-border-neutral overflow-hidden rounded-sm group">
 <div className="h-48 overflow-hidden">
-<img alt="Infrastructure Viaduct Works" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1558024920-b41e1887dc32?auto=format&fit=crop&w=1000&q=80"/>
+<img alt="Infrastructure Viaduct Works" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1558024920-b41e1887dc32?auto=format&fit=crop&w=1000&q=80" loading="lazy"/>
 </div>
 <div className="p-3.5 space-y-1">
 <span className="text-[11px] font-bold text-brand-gold uppercase">Infrastructure</span>
@@ -691,7 +963,7 @@ const Home = () => {
 </div>
 </section>
 {/* 09 LEADERSHIP & TECHNICAL GOVERNANCE */}
-<section className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24">
+<section ref={leadershipRef} className="w-full bg-surface-warm border-b border-border-neutral px-6 lg:px-10 py-16 lg:py-24" id="leadership">
 <div className="max-w-7xl mx-auto space-y-12">
 <div className="space-y-3">
 <span className="text-xs text-brand-blue uppercase font-bold tracking-wider">09 LEADERSHIP</span>
@@ -800,7 +1072,7 @@ const Home = () => {
 </div>
 </section>
 {/* 13 CONTACT US & REGIONAL COMMANDS */}
-<section className="w-full bg-surface-warm px-6 lg:px-10 py-16 lg:py-24 border-b border-border-neutral" id="contact"><div className="max-w-7xl mx-auto space-y-12"><div className="flex flex-col md:flex-row justify-between md:items-end gap-6 border-b border-border-neutral pb-6"><div><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">CONTACT US</span><h2 className="font-display text-3xl lg:text-5xl font-extrabold text-graphite uppercase tracking-tight">{homeData?.ctaTitle ? homeData.ctaTitle : <>HAVE A PROJECT IN MIND?<br/><span className="text-brand-blue">LET’S BUILD WITH PRECISION.</span></>}</h2><p className="text-base text-soft-grey max-w-2xl leading-relaxed mt-2">{homeData?.ctaBody || 'Consult directly with our engineering team to review architectural blueprints, BOQs, structural scopes, or regional site feasibility.'}</p></div><div className="flex flex-col gap-2 shrink-0"><a className="px-6 py-3.5 bg-brand-green hover:bg-[#05452d] text-white text-xs uppercase font-bold tracking-wider rounded-sm transition-colors shadow-sm flex items-center justify-center gap-2" href={homeData?.ctaButtonLink || "#"}><span className="material-symbols-outlined text-[18px]">chat</span><span>{homeData?.ctaButtonLabel ? `${homeData.ctaButtonLabel.toUpperCase()} →` : 'CHAT ON WHATSAPP →'}</span></a><span className="text-[11px] text-soft-grey text-center">[WHATSAPP NUMBER TO BE PROVIDED]</span></div></div><div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"><div className="lg:col-span-5 space-y-6"><div className="bg-white border border-border-neutral p-6 lg:p-8 space-y-6 rounded-sm shadow-sm"><span className="text-xs text-brand-blue uppercase font-bold tracking-wider block border-b border-border-neutral pb-2">Regional Command Headquarters</span><div className="space-y-4 text-xs"><div className="space-y-1 pb-3 border-b border-border-neutral"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-blue"></span><span>ODISHA (HEADQUARTERS)</span></div><p className="text-soft-grey leading-relaxed">3rd Floor, Block A, Radianz Complex, Plot No. 2471, Near Field Toyota, Nuagan, Cuttack, Odisha – 754001</p><div className="text-brand-blue font-semibold">Ph: +91 8596911655</div></div><div className="space-y-1 pb-3 border-b border-border-neutral"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-green"></span><span>ANDAMAN &amp; NICOBAR ISLANDS</span></div><p className="text-soft-grey leading-relaxed">75 JN Road, Haddo, Post Box No. 663, Port Blair – 744102, Andaman &amp; Nicobar Islands</p><div className="text-brand-blue font-semibold">Ph: 03192-241890 • M: +91 7695030022</div></div><div className="space-y-1"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-gold"></span><span>KOLKATA UNIT</span></div><p className="text-soft-grey leading-relaxed">31, Giri Babu Lane, 1st Floor, Room No. 8B, Kolkata – 700012</p><div className="text-brand-blue font-semibold">Ph: 033-22252605 • M: +91 7980207618</div></div></div><div className="p-4 bg-surface-warm border border-border-neutral space-y-1 rounded-sm text-xs"><div className="text-[11px] text-soft-grey uppercase font-medium">Official Contact Desk</div><a className="font-display text-base font-extrabold text-graphite hover:text-brand-blue transition-colors block" href="mailto:info@neevevara.com">info@neevevara.com</a><div className="text-[11px] text-soft-grey">Website: <a className="text-brand-blue font-semibold" href="https://www.neevevara.com">www.neevevara.com</a></div></div></div><div className="bg-white border border-border-neutral p-4 rounded-sm shadow-sm"><div className="h-44 bg-surface-muted border border-border-neutral rounded-sm flex flex-col items-center justify-center p-4 text-center"><span className="material-symbols-outlined text-3xl text-brand-blue mb-1">location_on</span><span className="font-display text-xs font-bold text-graphite uppercase block">ODISHA HEADQUARTERS — GOOGLE MAP LOCATION</span><p className="text-[11px] text-soft-grey mt-1">(Radianz Complex, Plot No. 2471, Nuagan, Cuttack – 754001)</p><span className="text-[10px] text-brand-blue font-medium mt-2">Interactive Map Embed • Verified Coordinates</span></div></div></div><div className="lg:col-span-7 bg-white border border-border-neutral p-6 lg:p-8 rounded-sm shadow-sm"><div className="border-b border-border-neutral pb-3 mb-5"><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">REQUEST FOR PROPOSAL / CONSULTATION</span><h3 className="font-display text-xl font-bold text-graphite uppercase pt-1">SUBMIT YOUR PROJECT SPECIFICATION</h3></div><form className="space-y-4" onSubmit={handleFormSubmit}><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Full Name *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. Er. Rajesh Patel" required="" type="text"/></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Email Address *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. rajesh@example.com" required="" type="email"/></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Phone Number *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="+91 XXXXX XXXXX" required="" type="tel"/></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Project PIN Code</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. 754001" type="text"/></div></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Service Category *</label><select className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue"><option>01 Building &amp; Civil Construction</option><option>02 Residential &amp; Commercial Projects</option><option>03 Industrial &amp; Heavy Facilities</option><option>04 Infrastructure, Roads &amp; Bridges</option><option>05 Project Management &amp; EPC Consultancy</option><option>06 Repair, Restoration &amp; Retrofitting</option></select></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Project Scope &amp; Details *</label><textarea className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="Describe your site location, approximate area, structural specifications, timeline requirements, or BOQ notes..." required="" rows="4"></textarea></div><div className="flex items-center gap-2 pt-1"><input className="w-4 h-4 rounded-sm border-border-neutral text-brand-blue focus:ring-0" id="nda-box" type="checkbox"/><label className="text-xs text-soft-grey cursor-pointer" htmlFor="nda-box">Request mutual Non-Disclosure Agreement (NDA) prior to transmitting sensitive project drawings.</label></div><div><button className="w-full py-3.5 bg-brand-blue hover:bg-brand-blue-hover text-white text-xs uppercase tracking-wider font-bold rounded-sm transition-colors shadow-sm flex items-center justify-center gap-2" type="submit"><span>Submit Project Inquiry</span><span className="material-symbols-outlined text-[16px]">send</span></button></div><div className="hidden p-3.5 bg-green-50 border border-green-200 text-brand-green text-xs font-medium text-center rounded-sm" id="rfq-feedback">✓ Project inquiry transmitted successfully. An engineering representative will respond within 24 business hours.</div></form></div></div></div></section>
+<section ref={contactRef} className="w-full bg-surface-warm px-6 lg:px-10 py-16 lg:py-24 border-b border-border-neutral" id="contact"><div className="max-w-7xl mx-auto space-y-12"><div className="flex flex-col md:flex-row justify-between md:items-end gap-6 border-b border-border-neutral pb-6"><div><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">CONTACT US</span><h2 className="font-display text-3xl lg:text-5xl font-extrabold text-graphite uppercase tracking-tight">{homeData?.ctaTitle ? homeData.ctaTitle : <>HAVE A PROJECT IN MIND?<br/><span className="text-brand-blue">LET’S BUILD WITH PRECISION.</span></>}</h2><p className="text-base text-soft-grey max-w-2xl leading-relaxed mt-2">{homeData?.ctaBody || 'Consult directly with our engineering team to review architectural blueprints, BOQs, structural scopes, or regional site feasibility.'}</p></div><div className="flex flex-col gap-2 shrink-0"><a className="px-6 py-3.5 bg-brand-green hover:bg-[#05452d] text-white text-xs uppercase font-bold tracking-wider rounded-sm transition-colors shadow-sm flex items-center justify-center gap-2" href={homeData?.ctaButtonLink || "#"}><span className="material-symbols-outlined text-[18px]">chat</span><span>{homeData?.ctaButtonLabel ? `${homeData.ctaButtonLabel.toUpperCase()} →` : 'CHAT ON WHATSAPP →'}</span></a><span className="text-[11px] text-soft-grey text-center">[WHATSAPP NUMBER TO BE PROVIDED]</span></div></div><div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"><div className="lg:col-span-5 space-y-6"><div className="bg-white border border-border-neutral p-6 lg:p-8 space-y-6 rounded-sm shadow-sm"><span className="text-xs text-brand-blue uppercase font-bold tracking-wider block border-b border-border-neutral pb-2">Regional Command Headquarters</span><div className="space-y-4 text-xs"><div className="space-y-1 pb-3 border-b border-border-neutral"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-blue"></span><span>ODISHA (HEADQUARTERS)</span></div><p className="text-soft-grey leading-relaxed">3rd Floor, Block A, Radianz Complex, Plot No. 2471, Near Field Toyota, Nuagan, Cuttack, Odisha – 754001</p><div className="text-brand-blue font-semibold">Ph: +91 8596911655</div></div><div className="space-y-1 pb-3 border-b border-border-neutral"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-green"></span><span>ANDAMAN &amp; NICOBAR ISLANDS</span></div><p className="text-soft-grey leading-relaxed">75 JN Road, Haddo, Post Box No. 663, Port Blair – 744102, Andaman &amp; Nicobar Islands</p><div className="text-brand-blue font-semibold">Ph: 03192-241890 • M: +91 7695030022</div></div><div className="space-y-1"><div className="text-xs font-bold text-graphite uppercase flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-gold"></span><span>KOLKATA UNIT</span></div><p className="text-soft-grey leading-relaxed">31, Giri Babu Lane, 1st Floor, Room No. 8B, Kolkata – 700012</p><div className="text-brand-blue font-semibold">Ph: 033-22252605 • M: +91 7980207618</div></div></div><div className="p-4 bg-surface-warm border border-border-neutral space-y-1 rounded-sm text-xs"><div className="text-[11px] text-soft-grey uppercase font-medium">Official Contact Desk</div><a className="font-display text-base font-extrabold text-graphite hover:text-brand-blue transition-colors block" href="mailto:info@neevevara.com">info@neevevara.com</a><div className="text-[11px] text-soft-grey">Website: <a className="text-brand-blue font-semibold" href="https://www.neevevara.com">www.neevevara.com</a></div></div></div><div className="bg-white border border-border-neutral p-4 rounded-sm shadow-sm"><div className="h-44 bg-surface-muted border border-border-neutral rounded-sm flex flex-col items-center justify-center p-4 text-center"><span className="material-symbols-outlined text-3xl text-brand-blue mb-1">location_on</span><span className="font-display text-xs font-bold text-graphite uppercase block">ODISHA HEADQUARTERS — GOOGLE MAP LOCATION</span><p className="text-[11px] text-soft-grey mt-1">(Radianz Complex, Plot No. 2471, Nuagan, Cuttack – 754001)</p><span className="text-[10px] text-brand-blue font-medium mt-2">Interactive Map Embed • Verified Coordinates</span></div></div></div><div className="lg:col-span-7 bg-white border border-border-neutral p-6 lg:p-8 rounded-sm shadow-sm"><div className="border-b border-border-neutral pb-3 mb-5"><span className="text-xs text-brand-blue uppercase font-bold tracking-wider">REQUEST FOR PROPOSAL / CONSULTATION</span><h3 className="font-display text-xl font-bold text-graphite uppercase pt-1">SUBMIT YOUR PROJECT SPECIFICATION</h3></div><form className="space-y-4" onSubmit={handleFormSubmit}><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Full Name *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. Er. Rajesh Patel" required="" type="text"/></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Email Address *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. rajesh@example.com" required="" type="email"/></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Phone Number *</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="+91 XXXXX XXXXX" required="" type="tel"/></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Project PIN Code</label><input className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="e.g. 754001" type="text"/></div></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Service Category *</label><select className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue"><option>01 Building &amp; Civil Construction</option><option>02 Residential &amp; Commercial Projects</option><option>03 Industrial &amp; Heavy Facilities</option><option>04 Infrastructure, Roads &amp; Bridges</option><option>05 Project Management &amp; EPC Consultancy</option><option>06 Repair, Restoration &amp; Retrofitting</option></select></div><div className="space-y-1"><label className="text-xs text-graphite uppercase font-bold block">Project Scope &amp; Details *</label><textarea className="w-full bg-surface-warm border border-border-neutral px-3.5 py-2 text-graphite text-xs rounded-sm focus:outline-none focus:border-brand-blue" placeholder="Describe your site location, approximate area, structural specifications, timeline requirements, or BOQ notes..." required="" rows="4"></textarea></div><div className="flex items-center gap-2 pt-1"><input className="w-4 h-4 rounded-sm border-border-neutral text-brand-blue focus:ring-0" id="nda-box" type="checkbox"/><label className="text-xs text-soft-grey cursor-pointer" htmlFor="nda-box">Request mutual Non-Disclosure Agreement (NDA) prior to transmitting sensitive project drawings.</label></div><div><button className="w-full py-3.5 bg-brand-blue hover:bg-brand-blue-hover text-white text-xs uppercase tracking-wider font-bold rounded-sm transition-colors shadow-sm flex items-center justify-center gap-2" type="submit"><span>Submit Project Inquiry</span><span className="material-symbols-outlined text-[16px]">send</span></button></div><div className="hidden p-3.5 bg-green-50 border border-green-200 text-brand-green text-xs font-medium text-center rounded-sm" id="rfq-feedback">✓ Project inquiry transmitted successfully. An engineering representative will respond within 24 business hours.</div></form></div></div></div></section>
 
     </main>
   );

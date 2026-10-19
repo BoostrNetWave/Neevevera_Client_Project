@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import adminApi from '../../utils/adminApi';
 import axios from 'axios';   // only for direct-to-Cloudinary (no auth needed there)
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'];
 const IMAGE_CONTEXTS   = ['galleryMedia', 'serviceImage', 'projectImage', 'teamPhoto'];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import adminApi from '../../utils/adminApi';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);

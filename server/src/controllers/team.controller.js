@@ -1,6 +1,6 @@
 import TeamMember from '../models/TeamMember.js';
 import { paginate } from '../utils/paginate.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { claimDocMedia, syncDocMediaUsage } from '../utils/mediaFields.js';
 
 export const getTeamMembers = async (req, res) => {
   const data = await paginate(TeamMember, { isActive: true }, req, { sort: { order: 1 } });
@@ -25,7 +25,7 @@ export const getTeamMember = async (req, res) => {
 
 export const createTeamMember = async (req, res) => {
   const member = await TeamMember.create({ ...req.body, createdBy: req.user._id });
-  if (member.image) incrementMediaUsage(member.image);
+  await claimDocMedia('TeamMember', member);
   res.status(201).json({ success: true, data: member });
 };
 
@@ -41,20 +41,14 @@ export const updateTeamMember = async (req, res) => {
     });
   }
   const { lastKnownUpdatedAt, ...updateData } = req.body;
-  
-  const oldImage = current.image;
-  const newImage = updateData.image;
 
   const updated = await TeamMember.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
 
-  if (newImage !== oldImage) {
-    if (oldImage) decrementMediaUsage(oldImage);
-    if (newImage) incrementMediaUsage(newImage);
-  }
+  await syncDocMediaUsage('TeamMember', current, updated);
 
   res.json({ success: true, data: updated });
 };

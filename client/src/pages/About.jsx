@@ -8,13 +8,22 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const About = () => {
   const [liveMembers, setLiveMembers] = useState([])
+  const [companyInfo, setCompanyInfo] = useState(null)
 
   useEffect(() => {
-    const fetchTeam = async () => {
+    const fetchAboutData = async () => {
       try {
-        const res = await axios.get(`${API}/team`, { params: { limit: 100 } })
-        if (res.data.success && res.data.items) {
-          const formatted = res.data.items.map(m => ({
+        const [teamRes, compRes] = await Promise.all([
+          axios.get(`${API}/team`, { params: { limit: 100 } }).catch(() => ({ data: {} })),
+          axios.get(`${API}/company`).catch(() => ({ data: {} }))
+        ])
+
+        if (compRes.data?.success && compRes.data?.data) {
+          setCompanyInfo(compRes.data.data)
+        }
+
+        if (teamRes.data?.success && teamRes.data?.items) {
+          const formatted = teamRes.data.items.map(m => ({
             id: m._id,
             name: m.name,
             role: m.designation,
@@ -26,10 +35,10 @@ const About = () => {
           setLiveMembers(formatted)
         }
       } catch (err) {
-        console.error('Failed to fetch team members:', err)
+        console.error('Failed to fetch about data:', err)
       }
     }
-    fetchTeam()
+    fetchAboutData()
   }, [])
 
   const allMembers = [...mockTeamMembers, ...liveMembers]
@@ -73,13 +82,13 @@ const About = () => {
                 <div className="p-4 bg-[#FAF9F6] border border-[#D8D8D2]">
                   <div className="font-medium text-xs text-[#07558F] font-bold uppercase">Our Mission</div>
                   <p className="text-xs text-[#444440] mt-1.5 leading-relaxed">
-                    To execute technically demanding civil and structural undertakings with zero compromise on safety, dimensional tolerances, and milestone timelines.
+                    {companyInfo?.mission || 'To execute technically demanding civil and structural undertakings with zero compromise on safety, dimensional tolerances, and milestone timelines.'}
                   </p>
                 </div>
                 <div className="p-4 bg-[#FAF9F6] border border-[#D8D8D2]">
                   <div className="font-medium text-xs text-[#075638] font-bold uppercase">Our Vision</div>
                   <p className="text-xs text-[#444440] mt-1.5 leading-relaxed">
-                    To be the most trusted civil engineering partner for government authorities, institutional developers, and industrial enterprises across Eastern India.
+                    {companyInfo?.vision || 'To be the most trusted civil engineering partner for government authorities, institutional developers, and industrial enterprises across Eastern India.'}
                   </p>
                 </div>
               </div>
@@ -98,11 +107,11 @@ const About = () => {
                 <div className="space-y-3 font-medium text-xs">
                   <div className="flex justify-between py-1.5 border-b border-[#E5E3DC]">
                     <span className="text-[#6B6B67]">Company Name</span>
-                    <span className="font-bold text-[#111822]">Neevevera Private Limited</span>
+                    <span className="font-bold text-[#111822]">{companyInfo?.name || 'Neevevera Private Limited'}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#E5E3DC]">
                     <span className="text-[#6B6B67]">CIN</span>
-                    <span className="font-bold text-[#111822]">U45200OR2020PTC033402</span>
+                    <span className="font-bold text-[#111822]">{companyInfo?.cinNumber || 'U45200OR2020PTC033402'}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#E5E3DC]">
                     <span className="text-[#6B6B67]">Incorporation Date</span>
@@ -117,8 +126,12 @@ const About = () => {
                     <span className="font-bold text-[#075638]">PWD Special Class-A</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-[#E5E3DC]">
-                    <span className="text-[#6B6B67]">ISO Standards</span>
-                    <span className="font-bold text-[#111822]">9001:2015 • 45001:2018</span>
+                    <span className="text-[#6B6B67]">Certifications</span>
+                    <span className="font-bold text-[#111822]">
+                      {companyInfo?.certifications && companyInfo.certifications.length > 0
+                        ? companyInfo.certifications.map(c => c.name).join(' • ')
+                        : '9001:2015 • 45001:2018'}
+                    </span>
                   </div>
                 </div>
 

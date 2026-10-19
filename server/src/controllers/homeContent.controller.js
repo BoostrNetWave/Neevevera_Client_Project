@@ -1,5 +1,5 @@
 import HomeContent from '../models/HomeContent.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { syncDocMediaUsage } from '../utils/mediaFields.js';
 
 const ALLOWED_FIELDS = [
   'heroTitle', 'heroSubtitle', 'heroImage', 'heroCtaLabel', 'heroCtaLink',
@@ -32,19 +32,14 @@ export const updateHomeContent = async (req, res) => {
   update.updatedBy = req.user._id;
 
   const current = await HomeContent.findOne({ _singletonKey: 'home' });
-  const oldImage = current?.heroImage;
-  const newImage = update.heroImage;
 
   const doc = await HomeContent.findOneAndUpdate(
     { _singletonKey: 'home' },
     { $set: update },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    { returnDocument: 'after', upsert: true, runValidators: true, setDefaultsOnInsert: true }
   );
-  
-  if (newImage !== oldImage) {
-    if (oldImage) decrementMediaUsage(oldImage);
-    if (newImage) incrementMediaUsage(newImage);
-  }
-  
+
+  await syncDocMediaUsage('HomeContent', current, doc);
+
   res.json({ success: true, data: doc });
 };

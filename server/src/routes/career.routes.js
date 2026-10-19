@@ -27,6 +27,28 @@ router.get(
   asyncHandler(careerController.getApplicationsCount)
 );
 
+router.get(
+  '/applications/all',
+  protect,
+  requireRole(...ADMIN_ROLES),
+  asyncHandler(careerController.getAllApplications)
+);
+
+router.patch(
+  '/applications/:appId',
+  protect,
+  requireRole('admin', 'superadmin'),
+  asyncHandler(careerController.updateApplicationStatus)
+);
+
+// ── Admin routes — job management ─────────────────────────────
+router.get('/admin/list', protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareersAdmin));
+router.get('/admin/:id',  protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareerById));
+router.post('/',          protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.createCareer));
+router.put('/:id',        protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.updateCareer));
+router.delete('/:id',     protect, requireRole('admin', 'superadmin'), asyncHandler(careerController.deactivateCareer));
+router.patch('/:id/activate', protect, requireRole('admin', 'superadmin'), asyncHandler(careerController.activateCareer));
+
 // ── Public routes ─────────────────────────────────────────────
 router.get('/',           asyncHandler(careerController.getCareers));
 router.get('/:slug',      asyncHandler(careerController.getCareerBySlug));
@@ -48,14 +70,6 @@ router.patch(
   requireRole('admin', 'superadmin'),
   asyncHandler(careerController.updateApplicationStatus)
 );
-
-// ── Admin routes — job management ─────────────────────────────
-router.get('/admin/list', protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareersAdmin));
-router.get('/admin/:id',  protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareerById));
-router.post('/',          protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.createCareer));
-router.put('/:id',        protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.updateCareer));
-router.delete('/:id',     protect, requireRole('admin', 'superadmin'), asyncHandler(careerController.deactivateCareer));
-router.patch('/:id/activate', protect, requireRole('admin', 'superadmin'), asyncHandler(careerController.activateCareer));
 
 export default router;
 

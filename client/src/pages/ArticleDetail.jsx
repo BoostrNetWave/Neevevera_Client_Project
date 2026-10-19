@@ -6,6 +6,8 @@ import axios from 'axios'
 import { insights as mockInsights } from '../data/mockData'
 import NewsletterCTA from '../components/NewsletterCTA'
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 const ArticleDetail = () => {
   const { slug } = useParams()
   const [article, setArticle] = useState(null)
@@ -15,7 +17,7 @@ const ArticleDetail = () => {
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/blog/${slug}`)
+        const res = await axios.get(`${API}/blog/${slug}`)
         if (res.data.success && res.data.data) {
           setArticle(res.data.data)
         }

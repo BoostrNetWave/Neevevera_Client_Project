@@ -1,6 +1,6 @@
 import Testimonial from '../models/Testimonial.js';
 import { paginate } from '../utils/paginate.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { claimDocMedia, syncDocMediaUsage, releaseDocMedia } from '../utils/mediaFields.js';
 
 export const getTestimonials = async (req, res) => {
   const query = { isApproved: true, isDeleted: false };
@@ -26,7 +26,7 @@ export const getTestimonialById = async (req, res) => {
 
 export const createTestimonial = async (req, res) => {
   const t = await Testimonial.create({ ...req.body, createdBy: req.user._id, isDeleted: false });
-  if (t.image) incrementMediaUsage(t.image);
+  await claimDocMedia('Testimonial', t);
   res.status(201).json({ success: true, data: t });
 };
 
@@ -44,20 +44,14 @@ export const updateTestimonial = async (req, res) => {
     });
   }
   const { lastKnownUpdatedAt, ...updateData } = req.body;
-  
-  const oldImage = current.image;
-  const newImage = updateData.image;
 
   const updated = await Testimonial.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
 
-  if (newImage !== oldImage) {
-    if (oldImage) decrementMediaUsage(oldImage);
-    if (newImage) incrementMediaUsage(newImage);
-  }
+  await syncDocMediaUsage('Testimonial', current, updated);
 
   res.json({ success: true, data: updated });
 };
@@ -68,6 +62,6 @@ export const deleteTestimonial = async (req, res) => {
     return res.status(404).json({ success: false, message: 'Testimonial not found.' });
   }
   await Testimonial.findByIdAndUpdate(req.params.id, { isDeleted: true, updatedBy: req.user._id });
-  if (t.image) decrementMediaUsage(t.image);
+  await releaseDocMedia('Testimonial', t);
   res.json({ success: true, message: 'Testimonial soft-deleted.' });
 };

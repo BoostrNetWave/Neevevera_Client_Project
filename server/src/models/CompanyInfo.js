@@ -17,11 +17,13 @@ const companyInfoSchema = new mongoose.Schema(
     _singleton: { type: String, default: 'company', unique: true, immutable: true },
 
     // Core identity
-    name:             { type: String, required: true, default: 'Neevevera Pvt. Ltd.' },
+    name:             { type: String, default: 'Neevevera Pvt. Ltd.' },
     tagline:          String,
-    overview:         { type: String, required: true },    // Company Overview
-    mission:          { type: String, required: true },    // Mission
-    vision:           { type: String, required: true },    // Vision
+    overview:         String,   // Company Overview
+    mission:          String,   // Mission
+    vision:           String,   // Vision
+    logoLight:        String,
+    logoDark:         String,
 
     // History (rich text / markdown)
     history:          String,

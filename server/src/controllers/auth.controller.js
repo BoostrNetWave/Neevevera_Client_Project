@@ -10,7 +10,7 @@ function setCookies(res, accessToken, refreshToken) {
     httpOnly: true,
     secure:   isProd,
     sameSite: isProd ? 'Strict' : 'Lax',
-    maxAge:   15 * 60 * 1000,           // 15 minutes
+    maxAge:   8 * 60 * 60 * 1000,           // 8 hours
   });
 
   if (refreshToken !== undefined) {
@@ -52,7 +52,7 @@ export async function loginUser(req, res) {
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '8h' }
     );
 
     const refreshToken = jwt.sign(
@@ -122,7 +122,7 @@ export async function refreshToken(req, res) {
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '8h' }
     );
 
     // Set only the access token — refresh token is untouched unless close to expiry

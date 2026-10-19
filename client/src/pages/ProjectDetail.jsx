@@ -5,6 +5,8 @@ import { FiArrowLeft, FiArrowRight, FiCheckCircle, FiDownload, FiMapPin, FiCalen
 import axios from 'axios'
 import { projects as mockProjects } from '../data/mockData'
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 const ProjectDetail = () => {
   const { slug } = useParams()
   const [project, setProject] = useState(null)
@@ -14,7 +16,7 @@ const ProjectDetail = () => {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/projects/${slug}`)
+        const res = await axios.get(`${API}/projects/${slug}`)
         if (res.data.success && res.data.data) {
           const p = res.data.data
           setProject({

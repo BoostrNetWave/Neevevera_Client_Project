@@ -18,23 +18,22 @@ const Application = () => {
 
   useEffect(() => {
     const fetchJob = async () => {
-      const mockJob = mockCareers.find((c) => c.slug === slug)
-      if (mockJob) {
-        setJob(mockJob)
-        setLoadingJob(false)
-        return
-      }
-
       try {
         const res = await axios.get(`${API}/careers/${slug}`)
         if (res.data.success && res.data.data) {
           setJob(res.data.data)
+          setLoadingJob(false)
+          return
         }
       } catch (err) {
-        console.error('Failed to fetch career details:', err)
-      } finally {
-        setLoadingJob(false)
+        console.warn('Live career fetch error, checking mock fallback:', err.message)
       }
+
+      const mockJob = mockCareers.find((c) => c.slug === slug)
+      if (mockJob) {
+        setJob(mockJob)
+      }
+      setLoadingJob(false)
     }
     
     fetchJob()
@@ -43,16 +42,14 @@ const Application = () => {
   const currentSlug = slug || job?.slug
 
   const handleFullSubmit = async (payload) => {
-    if (!resumeFile) {
-      throw new Error("Please attach a resume/CV document.")
+    let resumeUrl = ''
+    if (resumeFile) {
+      const uploadRes = await uploadResume(resumeFile)
+      resumeUrl = uploadRes.url || uploadRes.secure_url || ''
     }
-    // 1. Upload the resume first
-    const uploadRes = await uploadResume(resumeFile)
-    
-    // 2. Submit the application with the returned URL
     return submitApplication({
       ...payload,
-      resumeUrl: uploadRes.url
+      resumeUrl
     })
   }
 
@@ -72,10 +69,13 @@ const Application = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     await submit({
-      ...formData,
+      name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      coverLetter: formData.notes || `Experience: ${formData.experience}. Qualification: ${formData.qualification}. Current Location: ${formData.currentLocation}. Expected CTC: ${formData.expectedCtc}`,
       jobTitle: job?.title,
       jobSlug: currentSlug,
-      jobId: job?.id,
+      jobId: job?._id || job?.id,
     })
   }
 

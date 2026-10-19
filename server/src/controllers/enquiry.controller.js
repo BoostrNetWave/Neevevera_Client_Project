@@ -5,6 +5,8 @@ import { paginate } from '../utils/paginate.js';
 export const submitEnquiry = async (req, res) => {
   const payload = {
     ...req.body,
+    service: req.body.service ? String(req.body.service).slice(0, 120).trim() : undefined,
+    module: req.body.module ? String(req.body.module).slice(0, 120).trim() : undefined,
     ipAddress: req.ip || req.connection?.remoteAddress,
     userAgent: req.headers['user-agent'],
   };

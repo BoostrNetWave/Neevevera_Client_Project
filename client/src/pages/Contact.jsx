@@ -1,21 +1,52 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { FiPhone, FiMail, FiMapPin, FiSend, FiCheckCircle, FiClock, FiShield, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { useFormSubmit } from '../hooks/useFormSubmit'
 import { submitEnquiry } from '../services/enquiry.api'
 
+const SLUG_TO_LABEL = {
+  'construction': 'Construction',
+  'building-repair-maintenance': 'Building Repair and Maintenance',
+  'design-planning': 'Design and Planning',
+  'interior-exterior-solutions': 'Interior and Exterior Solutions',
+  'project-management-consultancy': 'Project Management Consultancy (PMC)',
+  'additional-services-platform-features': 'Additional Services and Platform Features',
+}
+
 const Contact = () => {
+  const [searchParams] = useSearchParams()
+  const serviceParam = (searchParams.get('service') || '').trim()
+  const moduleParam = (searchParams.get('module') || '').trim()
+
+  const resolvedCategory = SLUG_TO_LABEL[serviceParam] || (serviceParam ? serviceParam : 'Tender / RFQ Submission')
+
   const { submit, status, errorMsg, reset } = useFormSubmit(submitEnquiry)
   const [form, setForm] = useState({
     name: '',
     organization: '',
     email: '',
     phone: '',
-    serviceCategory: 'Tender / RFQ Submission',
+    serviceCategory: resolvedCategory,
+    service: serviceParam,
+    module: moduleParam,
     vendorRegion: 'Odisha HQ Corridor',
-    projectScope: '',
-    type: 'contact',
+    projectScope: moduleParam ? `Inquiry regarding ${moduleParam} under ${resolvedCategory}.` : '',
+    type: moduleParam || serviceParam ? 'service_inquiry' : 'contact',
   })
+
+  useEffect(() => {
+    if (serviceParam || moduleParam) {
+      setForm(prev => ({
+        ...prev,
+        serviceCategory: resolvedCategory,
+        service: serviceParam,
+        module: moduleParam,
+        type: 'service_inquiry',
+        projectScope: prev.projectScope || (moduleParam ? `Inquiry regarding ${moduleParam} under ${resolvedCategory}.` : ''),
+      }))
+    }
+  }, [serviceParam, moduleParam, resolvedCategory])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -219,9 +250,12 @@ const Contact = () => {
                       className="w-full text-xs font-medium px-3 py-2.5 bg-[#FAF9F6] border border-[#D8D8D2] focus:outline-none focus:border-[#07558F]"
                     >
                       <option>Tender / RFQ Submission</option>
-                      <option>Turnkey Commercial Construction</option>
-                      <option>Industrial Facility &amp; PEB</option>
-                      <option>Coastal / Maritime Works</option>
+                      <option>Construction</option>
+                      <option>Building Repair and Maintenance</option>
+                      <option>Design and Planning</option>
+                      <option>Interior and Exterior Solutions</option>
+                      <option>Project Management Consultancy (PMC)</option>
+                      <option>Additional Services and Platform Features</option>
                       <option>Material Vendor Registration</option>
                       <option>Subcontractor Partnership</option>
                       <option>General Administration</option>

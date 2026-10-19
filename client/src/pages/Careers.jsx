@@ -14,8 +14,9 @@ const Careers = () => {
     const fetchCareers = async () => {
       try {
         const res = await axios.get(`${API}/careers`, { params: { limit: 100 } })
-        if (res.data.success && res.data.items) {
-          const formatted = res.data.items.map(c => ({
+        const rawJobs = res.data.data || res.data.items;
+        if (res.data.success && Array.isArray(rawJobs)) {
+          const formatted = rawJobs.map(c => ({
             id: c._id,
             slug: c.slug,
             title: c.title,

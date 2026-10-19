@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import adminApi from '../../utils/adminApi';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const STATUSES = ['new', 'read', 'contacted', 'boq-sent', 'won', 'lost', 'closed'];
 
@@ -120,7 +120,14 @@ const AdminEnquiries = () => {
                   </td>
                   <td className="py-3.5 px-5">
                     <span className="text-graphite block truncate max-w-xs" title={row.projectScope}>{row.projectScope}</span>
-                    <span className="text-xs text-soft-grey">{row.serviceCategory || 'General'}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                      <span className="text-xs text-soft-grey">{row.serviceCategory || 'General'}</span>
+                      {row.module && (
+                        <span className="px-1.5 py-0.2 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded-xs text-[10px] font-bold font-mono">
+                          Module: {row.module}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="text-xs text-soft-grey flex flex-col gap-0.5">
@@ -129,7 +136,7 @@ const AdminEnquiries = () => {
                     </div>
                   </td>
                   <td className="py-3.5 px-5">
-                    <span className="text-xs text-soft-grey uppercase">{row.type.replace('-', ' ')}</span>
+                    <span className="text-xs text-soft-grey uppercase">{(row.type || 'contact').replace(/[-_]/g, ' ')}</span>
                   </td>
                   <td className="py-3.5 px-5">
                     <select value={row.status} onChange={e => updateStatus(row._id, e.target.value)}

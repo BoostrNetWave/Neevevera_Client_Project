@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import adminApi from '../../utils/adminApi';
 import MediaLibrary from '../../components/admin/MediaLibrary';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -149,7 +149,8 @@ const AdminCompany = () => {
         mission:        d.mission        || '',
         vision:         d.vision         || '',
         history:        d.history        || '',
-        values:         d.values         || [],
+        // values in DB are {title, description} objects — extract just the title string for the simple editor
+        values:         (d.values || []).map(v => typeof v === 'string' ? v : (v.title || '')),
         certifications: d.certifications || [],
         awards:         d.awards         || [],
       });
@@ -174,7 +175,14 @@ const AdminCompany = () => {
     setSaveSuccess(false);
     setApiError('');
     try {
-      await adminApi.put(`${API}/company`, form);
+      // Convert plain string values back into the {title} object shape the model expects
+      const payload = {
+        ...form,
+        values: form.values.filter(v => v.trim()).map(v =>
+          typeof v === 'string' ? { title: v, description: '' } : v
+        ),
+      };
+      await adminApi.put(`${API}/company`, payload);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {

@@ -1,7 +1,7 @@
 import Service from '../models/Service.js';
 import { paginate } from '../utils/paginate.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
 import sendEmail from '../utils/mailer.js';
+import { claimDocMedia, syncDocMediaUsage, releaseDocMedia } from '../utils/mediaFields.js';
 
 export const getServices = async (req, res) => {
   const query = { isActive: true };
@@ -40,7 +40,7 @@ export const activateService = async (req, res) => {
   const service = await Service.findByIdAndUpdate(
     req.params.id,
     { isActive: true, updatedBy: req.user._id },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (!service) return res.status(404).json({ success: false, message: 'Service not found.' });
   res.json({ success: true, message: 'Service activated.', data: service });
@@ -48,10 +48,11 @@ export const activateService = async (req, res) => {
 
 export const createService = async (req, res) => {
   const service = await Service.create({ ...req.body, createdBy: req.user._id });
-  if (service.image) incrementMediaUsage(service.image);
+
+  await claimDocMedia('Service', service);
 
   sendEmail({
-    to: "ayankhan987456@gmail.com",
+    to: "fannekhan334@gmail.com",
     subject: `New Service Added: ${service.title}`,
     text: `We just added a new service: ${service.title}!`,
     html: `<p>We just added a new service: <strong>${service.title}</strong>! Check it out: <a href="http://localhost:5173/services/${service.slug}">Read More</a></p>`
@@ -72,25 +73,29 @@ export const updateService = async (req, res) => {
     });
   }
   const { lastKnownUpdatedAt, ...updateData } = req.body;
-  
-  const oldCover = current.image;
-  const newCover = updateData.image;
-  
+
   const updated = await Service.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
-  
-  if (newCover !== oldCover) {
-    if (oldCover) decrementMediaUsage(oldCover);
-    if (newCover) incrementMediaUsage(newCover);
-  }
-  
+
+  await syncDocMediaUsage('Service', current, updated);
+
   res.json({ success: true, data: updated });
 };
 
 export const deactivateService = async (req, res) => {
   await Service.findByIdAndUpdate(req.params.id, { isActive: false, updatedBy: req.user._id });
   res.json({ success: true, message: 'Service deactivated.' });
+};
+
+export const deleteService = async (req, res) => {
+  const service = await Service.findById(req.params.id);
+  if (!service) return res.status(404).json({ success: false, message: 'Service not found.' });
+
+  await Service.findByIdAndDelete(req.params.id);
+  await releaseDocMedia('Service', service);
+
+  res.json({ success: true, message: 'Service deleted.' });
 };

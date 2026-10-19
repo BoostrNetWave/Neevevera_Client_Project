@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import MediaAsset from '../src/models/MediaAsset.js';
+import GalleryItem from '../src/models/GalleryItem.js';
 import Project from '../src/models/Project.js';
 import Service from '../src/models/Service.js';
 import TeamMember from '../src/models/TeamMember.js';
@@ -8,6 +9,7 @@ import Testimonial from '../src/models/Testimonial.js';
 import Blog from '../src/models/Blog.js';
 import HomeContent from '../src/models/HomeContent.js';
 import CompanyInfo from '../src/models/CompanyInfo.js';
+import { extractMediaUrls } from '../src/utils/mediaFields.js';
 
 async function run() {
   await mongoose.connect(process.env.MONGO_URI);
@@ -22,62 +24,48 @@ async function run() {
     return;
   }
 
-  const orphanUrls = orphans.map(a => a.url);
-  const orphanPublicIds = orphans.map(a => a.publicId);
+  // Gather referenced URLs/publicIds across all collections using MEDIA_FIELDS
+  const referencedUrls = new Map(); // url -> Array of model names
 
-  // Check if any of these URLs/publicIds are actually used in other collections
+  const collections = [
+    { modelName: 'GalleryItem', model: GalleryItem },
+    { modelName: 'Project',     model: Project },
+    { modelName: 'Service',     model: Service },
+    { modelName: 'TeamMember',  model: TeamMember },
+    { modelName: 'Testimonial', model: Testimonial },
+    { modelName: 'Blog',        model: Blog },
+    { modelName: 'HomeContent', model: HomeContent },
+    { modelName: 'CompanyInfo', model: CompanyInfo },
+  ];
+
+  for (const { modelName, model } of collections) {
+    const docs = await model.find().lean();
+    for (const doc of docs) {
+      const urls = extractMediaUrls(modelName, doc);
+      for (const u of urls) {
+        if (!referencedUrls.has(u)) referencedUrls.set(u, []);
+        referencedUrls.get(u).push(modelName);
+      }
+      if (modelName === 'GalleryItem' && doc.publicId) {
+        if (!referencedUrls.has(doc.publicId)) referencedUrls.set(doc.publicId, []);
+        referencedUrls.get(doc.publicId).push('GalleryItem');
+      }
+    }
+  }
+
   let falseOrphans = 0;
-
   for (const asset of orphans) {
-    let isUsed = false;
-    let usedIn = [];
+    const usedInUrl = referencedUrls.get(asset.url);
+    const usedInPid = referencedUrls.get(asset.publicId);
+    const usedIn = Array.from(new Set([...(usedInUrl || []), ...(usedInPid || [])]));
 
-    // Check Projects (coverImage, gallery array)
-    const inProjects = await Project.countDocuments({
-      $or: [
-        { coverImage: asset.url },
-        { gallery: asset.url }
-      ]
-    });
-    if (inProjects > 0) { isUsed = true; usedIn.push('Project'); }
-
-    // Check Services (coverImage, icon if it's a URL)
-    const inServices = await Service.countDocuments({ coverImage: asset.url });
-    if (inServices > 0) { isUsed = true; usedIn.push('Service'); }
-
-    // Check Team (image)
-    const inTeam = await TeamMember.countDocuments({ image: asset.url });
-    if (inTeam > 0) { isUsed = true; usedIn.push('TeamMember'); }
-
-    // Check Testimonial (image)
-    const inTestimonial = await Testimonial.countDocuments({ image: asset.url });
-    if (inTestimonial > 0) { isUsed = true; usedIn.push('Testimonial'); }
-
-    // Check Blog (coverImage)
-    const inBlog = await Blog.countDocuments({ coverImage: asset.url });
-    if (inBlog > 0) { isUsed = true; usedIn.push('Blog'); }
-
-    // Check HomeContent (heroImage)
-    const inHome = await HomeContent.countDocuments({ heroImage: asset.url });
-    if (inHome > 0) { isUsed = true; usedIn.push('HomeContent'); }
-
-    // Check CompanyInfo (logo, certifications)
-    const inCompany = await CompanyInfo.countDocuments({
-      $or: [
-        { logoLight: asset.url },
-        { logoDark: asset.url },
-        { 'certifications.image': asset.url }
-      ]
-    });
-    if (inCompany > 0) { isUsed = true; usedIn.push('CompanyInfo'); }
-
-    if (isUsed) {
+    if (usedIn.length > 0) {
       console.log(`FALSE ORPHAN: Asset ${asset.publicId} (context: ${asset.context}) is used in: ${usedIn.join(', ')}`);
       falseOrphans++;
     }
   }
 
-  console.log(`\nTotal False Orphans (usageCount: 0 but actually referenced): ${falseOrphans}`);
+  console.log(`\nTotal False Orphans (usageCount: 0 but actively referenced in content): ${falseOrphans}`);
   console.log(`True Orphans (safe to delete): ${orphans.length - falseOrphans}`);
 
   await mongoose.disconnect();

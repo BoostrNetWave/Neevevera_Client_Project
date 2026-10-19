@@ -5,6 +5,14 @@ import { startOrphanCleanupJob } from "./src/jobs/orphanCleanup.js";
 
 const PORT = process.env.PORT || 5000;
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Promise Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+});
+
 async function startServer() {
   try {
     console.log("MONGO_URI loaded:", Boolean(process.env.MONGO_URI));

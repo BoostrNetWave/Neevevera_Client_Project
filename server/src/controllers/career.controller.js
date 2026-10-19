@@ -31,6 +31,35 @@ export const applyToCareer = async (req, res) => {
   res.status(201).json({ success: true, message: 'Application submitted successfully' });
 };
 
+// Admin: GET /api/careers/applications/all — list all applications across all jobs
+export const getAllApplications = async (req, res) => {
+  const jobs = await Career.find({}).sort({ createdAt: -1 });
+  const allApps = [];
+  for (const job of jobs) {
+    if (Array.isArray(job.applications)) {
+      for (const app of job.applications) {
+        allApps.push({
+          _id: app._id,
+          name: app.name,
+          email: app.email,
+          phone: app.phone,
+          resumeUrl: app.resumeUrl,
+          coverLetter: app.coverLetter,
+          appliedAt: app.appliedAt,
+          status: app.status || 'received',
+          jobId: job._id,
+          jobTitle: job.title,
+          jobSlug: job.slug,
+          jobDepartment: job.department,
+          jobLocation: job.location,
+        });
+      }
+    }
+  }
+  allApps.sort((a, b) => new Date(b.appliedAt || 0) - new Date(a.appliedAt || 0));
+  res.json({ success: true, count: allApps.length, data: allApps });
+};
+
 // Admin: GET /api/careers/:slug/applications — list all applications for a job
 export const getApplications = async (req, res) => {
   const job = await Career.findOne({ slug: req.params.slug });
@@ -38,7 +67,7 @@ export const getApplications = async (req, res) => {
   res.json({ success: true, count: job.applications.length, data: job.applications });
 };
 
-// Admin: PATCH /api/careers/:slug/applications/:appId — update application status
+// Admin: PATCH /api/careers/:slug/applications/:appId or /api/careers/applications/:appId — update application status
 // Uses MongoDB positional $ operator for atomic subdocument update.
 // Status enum: received → reviewed → shortlisted → rejected
 export const updateApplicationStatus = async (req, res) => {
@@ -52,11 +81,12 @@ export const updateApplicationStatus = async (req, res) => {
     });
   }
 
+  const query = req.params.slug
+    ? { slug: req.params.slug, 'applications._id': req.params.appId }
+    : { 'applications._id': req.params.appId };
+
   const job = await Career.findOneAndUpdate(
-    {
-      slug: req.params.slug,
-      'applications._id': req.params.appId,
-    },
+    query,
     {
       $set: { 'applications.$.status': status },
     },
@@ -78,8 +108,7 @@ export const getCareersAdmin = async (req, res) => {
   if (req.query.search) {
     query.title = { $regex: req.query.search, $options: 'i' };
   }
-  // Career list doesn't use paginate in public route currently, but let's just return all for admin
-  const jobs = await Career.find(query).select('-applications').sort({ createdAt: -1 });
+  const jobs = await Career.find(query).sort({ createdAt: -1 });
   // Wrap in a mock pagination envelope to match the UI pattern exactly
   res.json({ success: true, items: jobs, total: jobs.length, page: 1, pages: 1 });
 };

@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const CATEGORIES = ['company-update', 'project-update', 'industry-news', 'construction-tips', 'engineering', 'maintenance'];
 const TYPES      = ['article', 'podcast', 'newsletter', 'field-note'];

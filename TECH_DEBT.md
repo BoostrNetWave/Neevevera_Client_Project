@@ -105,6 +105,31 @@ label is accurate: it works for simple queries but should not be described as
 "full-text search" in any external documentation or product spec until Option A or B
 above is implemented.
 
+**Sub-services visibility limitation (Logged: 2026-10-15):**  
+`search.controller.js` only matches against `Service.title` and `Service.description`.
+It does not inspect nested `sections[].title` or `sections[].services[].title`.
+Queries for specific sub-services (e.g. "Villas", "Waterproofing", "AAC Block Masonry")
+will not return the parent service vertical in search results until the query
+is extended to traverse nested sub-service fields.
+
+---
+
+## CR-001 — Client-Requested Change: 6-Vertical Services Restructuring
+
+**Status:** Implemented  
+**Date Logged:** 2026-10-15  
+**Requested by:** Client  
+**Aligned PRD Reference:** PRD §4.3 (All Services Displayed)
+
+### Context & Decision
+PRD Section 4.3 enumerates ~31 distinct services. The client requested grouping these into 6 core corporate verticals (Construction, Building Repair & Maintenance, Design & Planning, Interior & Exterior Solutions, Project Management Consultancy, and Additional Services/Platform Features) using a two-level nested operational structure (Vertical &rarr; Sections &rarr; Sub-Services).
+
+### Implementation Specifics
+- Hierarchical schema in `server/src/models/Service.js` (`sections[]` containing `services[]`).
+- Admin CMS editor in `client/src/pages/admin/Services.jsx` (`SectionsEditor`) providing full CRUD on sections, sub-services, and order, with MediaPicker image reuse and 409 concurrency checks.
+- Media usage tracking via `server/src/utils/serviceMedia.js` (`collectServiceImages`) ensuring sub-service images are tracked in `MediaAsset.usageCount`.
+- PRD §4.3.1 fields (`benefits`, `priceNote`, `legalNote`) retained in schema, editable in CMS, and rendered in a compact guarantee block on the detail page.
+
 ---
 
 ## TD-003 — Applications: Cross-Job Aggregate Endpoint

@@ -1,7 +1,7 @@
 import Blog from '../models/Blog.js';
 import { paginate } from '../utils/paginate.js';
 import sendEmail from '../utils/mailer.js';
-import { incrementMediaUsage, decrementMediaUsage } from '../utils/mediaHelper.js';
+import { claimDocMedia, syncDocMediaUsage, releaseDocMedia } from '../utils/mediaFields.js';
 
 export const getBlogs = async (req, res) => {
   const query = { isDeleted: false, isPublished: true };
@@ -36,18 +36,16 @@ export const getAdminBlogById = async (req, res) => {
 
 export const createBlog = async (req, res) => {
   const blog = await Blog.create({ ...req.body, createdBy: req.user._id, isDeleted: false });
-  if (blog.coverImage) incrementMediaUsage(blog.coverImage);
-  
-  
+  await claimDocMedia('Blog', blog);
+
   sendEmail({
     to: "ayankhan987456@gmail.com",
     subject: "New Blog Post ",
     text: "Check out our latest blog post!",
     html: `<p>Check out our latest blog post! Read it here: <a href="http://localhost:5173/insights/${blog.slug}">Read More</a></p>`
   });
-  
-  res.status(201).json({ success: true, data: blog });
 
+  res.status(201).json({ success: true, data: blog });
 };
 
 export const updateBlog = async (req, res) => {
@@ -64,23 +62,17 @@ export const updateBlog = async (req, res) => {
     });
   }
   const { lastKnownUpdatedAt, ...updateData } = req.body;
-  
+
   if (updateData.isPublished && !current.publishedAt) updateData.publishedAt = new Date();
-  
-  const oldCover = current.coverImage;
-  const newCover = updateData.coverImage;
-  
+
   const updated = await Blog.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
-  
-  if (newCover !== oldCover) {
-    if (oldCover) decrementMediaUsage(oldCover);
-    if (newCover) incrementMediaUsage(newCover);
-  }
-  
+
+  await syncDocMediaUsage('Blog', current, updated);
+
   res.json({ success: true, data: updated });
 };
 
@@ -89,14 +81,14 @@ export const deleteBlog = async (req, res) => {
   if (!blog || blog.isDeleted) {
     return res.status(404).json({ success: false, message: 'Article not found.' });
   }
-  
+
   if (blog.isPublished) {
     await Blog.findByIdAndUpdate(req.params.id, { isDeleted: true, updatedBy: req.user._id });
-    if (blog.coverImage) decrementMediaUsage(blog.coverImage);
+    await releaseDocMedia('Blog', blog);
     return res.json({ success: true, message: 'Article soft-deleted.' });
   } else {
     await Blog.findByIdAndDelete(req.params.id);
-    if (blog.coverImage) decrementMediaUsage(blog.coverImage);
+    await releaseDocMedia('Blog', blog);
     return res.json({ success: true, message: 'Draft permanently deleted.' });
   }
 };

@@ -6,39 +6,58 @@ import MediaAsset from '../models/MediaAsset.js';
  */
 export async function incrementMediaUsage(urlOrPublicId) {
   if (!urlOrPublicId) return;
-  
-  const query = urlOrPublicId.startsWith('http') 
-    ? { url: urlOrPublicId, isDeleted: false } 
+
+  // Local static paths (e.g. /images/logo.png) never have a MediaAsset record — skip silently.
+  if (urlOrPublicId.startsWith('/')) return;
+
+  const query = urlOrPublicId.startsWith('http')
+    ? { url: urlOrPublicId, isDeleted: false }
     : { publicId: urlOrPublicId, isDeleted: false };
 
   try {
-    await MediaAsset.findOneAndUpdate(
+    const result = await MediaAsset.findOneAndUpdate(
       query,
-      { $inc: { usageCount: 1 } }
+      { $inc: { usageCount: 1 } },
+      { returnDocument: 'after' }
     );
+    if (!result) {
+      console.warn(`[mediaHelper] increment: no MediaAsset found for "${urlOrPublicId}" — possible pasted/external URL`);
+    }
+    return result;
   } catch (err) {
     console.error(`[mediaHelper] incrementMediaUsage failed for ${urlOrPublicId}:`, err.message);
   }
 }
 
 /**
- * Decrement usageCount for a MediaAsset, flooring at 0.
- * Uses $max to prevent going negative — MongoDB's $inc can produce negatives
- * if decrements race, so we combine $inc -1 with a $max floor via aggregation
- * pipeline update (Mongo 4.2+).
+ * Decrement usageCount for a MediaAsset in a single atomic update clamped at 0.
+ * Uses conditional filter { usageCount: { $gt: 0 } } so it never matches at 0, preventing negative counts.
  */
 export async function decrementMediaUsage(urlOrPublicId) {
   if (!urlOrPublicId) return;
-  
-  const query = urlOrPublicId.startsWith('http') 
-    ? { url: urlOrPublicId } 
+
+  // Local static paths never have a MediaAsset record — skip silently.
+  if (urlOrPublicId.startsWith('/')) return;
+
+  const baseQuery = urlOrPublicId.startsWith('http')
+    ? { url: urlOrPublicId }
     : { publicId: urlOrPublicId };
 
   try {
-    await MediaAsset.findOneAndUpdate(
-      query,
-      [{ $set: { usageCount: { $max: [0, { $subtract: ['$usageCount', 1] }] } } }]
+    const result = await MediaAsset.findOneAndUpdate(
+      { ...baseQuery, usageCount: { $gt: 0 } },
+      { $inc: { usageCount: -1 } },
+      { returnDocument: 'after' }
     );
+    if (!result) {
+      const existing = await MediaAsset.findOne(baseQuery);
+      if (!existing) {
+        console.warn(`[mediaHelper] decrement: no MediaAsset found for "${urlOrPublicId}" — possible pasted/external URL`);
+      } else {
+        console.warn(`[mediaHelper] decrement: MediaAsset "${urlOrPublicId}" already at usageCount: ${existing.usageCount} (counts out of sync, clamped at 0)`);
+      }
+    }
+    return result;
   } catch (err) {
     console.error(`[mediaHelper] decrementMediaUsage failed for ${urlOrPublicId}:`, err.message);
   }

@@ -359,7 +359,7 @@ describe('CMS entity smoke tests (Team, Service, Testimonial, Podcast)', () => {
 
   test('GET /api/services — returns only active services publicly', async () => {
     await Service.create({ slug: 'active-svc', title: 'Active', category: 'construction', description: 'Active', isActive: true });
-    await Service.create({ slug: 'inactive-svc', title: 'Inactive', category: 'finishing', description: 'Inactive', isActive: false });
+    await Service.create({ slug: 'inactive-svc', title: 'Inactive', category: 'building-repair-maintenance', description: 'Inactive', isActive: false });
     const res = await request(app).get('/api/services');
     expect(res.status).toBe(200);
     expect(res.body.items.every(s => s.isActive === true)).toBe(true);

@@ -15,8 +15,19 @@ import * as enquiryController from '../controllers/enquiry.controller.js';
 
 const router = express.Router();
 
-// Public: unauthenticated — allowlisted route, no protect middleware
-router.post('/', asyncHandler(enquiryController.submitEnquiry));
+import rateLimit from 'express-rate-limit';
+
+const enquirySubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: { success: false, message: 'Too many submissions from your IP. Please wait a few minutes.' },
+});
+
+// Public: unauthenticated — allowlisted route, form-spam rate limited
+router.post('/', enquirySubmitLimiter, asyncHandler(enquiryController.submitEnquiry));
 
 // Admin inbox
 router.get('/', protect, requireRole('admin', 'superadmin', 'editor'), asyncHandler(enquiryController.getEnquiries));

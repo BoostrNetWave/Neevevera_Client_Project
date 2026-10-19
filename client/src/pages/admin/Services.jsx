@@ -2,9 +2,25 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import adminApi from '../../utils/adminApi';
 import MediaLibrary from '../../components/admin/MediaLibrary';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
-const CATEGORIES = ['construction', 'finishing', 'specialized', 'professional', 'legal', 'education'];
+const CATEGORIES = [
+  'construction',
+  'building-repair-maintenance',
+  'design-planning',
+  'interior-exterior-solutions',
+  'project-management-consultancy',
+  'additional-services-platform-features',
+];
+
+const CATEGORY_LABELS = {
+  'construction': 'Construction',
+  'building-repair-maintenance': 'Building Repair and Maintenance',
+  'design-planning': 'Design and Planning',
+  'interior-exterior-solutions': 'Interior and Exterior Solutions',
+  'project-management-consultancy': 'Project Management Consultancy (PMC)',
+  'additional-services-platform-features': 'Additional Services and Platform Features',
+};
 
 // ── Slug generator ─────────────────────────────────────────────
 const toSlug = (str) =>
@@ -57,15 +73,360 @@ const StringListEditor = ({ label, placeholder, items, onChange }) => {
   );
 };
 
+// ── Sections & Sub-Services Editor ─────────────────────────────
+const SectionsEditor = ({ sections = [], onChange, onPickImage }) => {
+  const addSection = () => {
+    onChange([
+      ...sections,
+      {
+        title: '',
+        description: '',
+        order: sections.length + 1,
+        services: [
+          {
+            title: '',
+            description: '',
+            image: '/images/client_hero.webp',
+            isActive: true,
+            order: 1,
+          },
+        ],
+      },
+    ]);
+  };
+
+  const removeSection = (sIdx) => {
+    onChange(sections.filter((_, idx) => idx !== sIdx));
+  };
+
+  const updateSection = (sIdx, field, val) => {
+    const updated = [...sections];
+    updated[sIdx] = { ...updated[sIdx], [field]: val };
+    onChange(updated);
+  };
+
+  const moveSection = (sIdx, direction) => {
+    if (
+      (direction === -1 && sIdx === 0) ||
+      (direction === 1 && sIdx === sections.length - 1)
+    ) return;
+    const updated = [...sections];
+    const targetIdx = sIdx + direction;
+    const temp = updated[sIdx];
+    updated[sIdx] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    // Sync order to array index so DB stays consistent
+    onChange(updated.map((s, i) => ({ ...s, order: i + 1 })));
+  };
+
+  const addSubService = (sIdx) => {
+    const updated = [...sections];
+    const currServices = updated[sIdx]?.services || [];
+    updated[sIdx] = {
+      ...updated[sIdx],
+      services: [
+        ...currServices,
+        {
+          title: '',
+          description: '',
+          image: '/images/client_commercial.webp',
+          isActive: true,
+          order: currServices.length + 1,
+        },
+      ],
+    };
+    onChange(updated);
+  };
+
+  const removeSubService = (sIdx, subIdx) => {
+    const updated = [...sections];
+    const currServices = updated[sIdx]?.services || [];
+    updated[sIdx] = {
+      ...updated[sIdx],
+      services: currServices.filter((_, idx) => idx !== subIdx),
+    };
+    onChange(updated);
+  };
+
+  const updateSubService = (sIdx, subIdx, field, val) => {
+    const updated = [...sections];
+    const currServices = [...(updated[sIdx]?.services || [])];
+    currServices[subIdx] = { ...currServices[subIdx], [field]: val };
+    updated[sIdx] = { ...updated[sIdx], services: currServices };
+    onChange(updated);
+  };
+
+  const moveSubService = (sIdx, subIdx, direction) => {
+    const updated = [...sections];
+    const currServices = [...(updated[sIdx]?.services || [])];
+    if (
+      (direction === -1 && subIdx === 0) ||
+      (direction === 1 && subIdx === currServices.length - 1)
+    ) return;
+    const targetIdx = subIdx + direction;
+    const temp = currServices[subIdx];
+    currServices[subIdx] = currServices[targetIdx];
+    currServices[targetIdx] = temp;
+    // Sync order to array index so DB stays consistent
+    updated[sIdx] = { ...updated[sIdx], services: currServices.map((s, i) => ({ ...s, order: i + 1 })) };
+    onChange(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      {sections.length === 0 && (
+        <div className="p-6 text-center border-2 border-dashed border-border-neutral rounded-sm bg-surface-warm/40">
+          <span className="material-symbols-outlined text-soft-grey text-3xl mb-1">dashboard_customize</span>
+          <p className="text-sm font-medium text-graphite">No sections or sub-services added yet.</p>
+          <p className="text-xs text-soft-grey mt-0.5">
+            Add subheadings like "Residential Construction" and sub-services like "Villas", "Apartments" with images.
+          </p>
+          <button
+            type="button"
+            onClick={addSection}
+            className="mt-3 px-4 py-1.5 text-xs font-bold uppercase tracking-wider bg-brand-blue text-white rounded-sm hover:bg-brand-blue-hover transition-colors font-display inline-flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span> Add First Section
+          </button>
+        </div>
+      )}
+
+      {sections.map((section, sIdx) => (
+        <div key={sIdx} className="border border-border-neutral rounded-sm bg-white overflow-hidden shadow-2xs">
+          {/* Section Bar */}
+          <div className="px-4 py-3 bg-surface-warm border-b border-border-neutral flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-graphite text-white rounded-xs font-mono">
+                SECTION {String(sIdx + 1).padStart(2, '0')}
+              </span>
+              <span className="font-display font-bold text-xs uppercase tracking-wider text-graphite">
+                {section.title || `Untitled Section ${sIdx + 1}`}
+              </span>
+              <span className="text-[11px] text-soft-grey">
+                ({(section.services || []).length} sub-service{(section.services || []).length !== 1 ? 's' : ''})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => moveSection(sIdx, -1)}
+                disabled={sIdx === 0}
+                className="p-1 text-soft-grey hover:text-graphite disabled:opacity-30 transition-colors"
+                title="Move section up"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => moveSection(sIdx, 1)}
+                disabled={sIdx === sections.length - 1}
+                className="p-1 text-soft-grey hover:text-graphite disabled:opacity-30 transition-colors"
+                title="Move section down"
+              >
+                <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => removeSection(sIdx)}
+                className="p-1 text-soft-grey hover:text-red-500 transition-colors ml-2"
+                title="Delete section"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Section Heading & Description */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-graphite font-display">
+                  Subheading / Section Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={section.title || ''}
+                  onChange={(e) => updateSection(sIdx, 'title', e.target.value)}
+                  placeholder="e.g. A. Residential Construction"
+                  className="w-full px-3 py-2 text-xs bg-surface-white border border-border-neutral rounded-sm text-graphite outline-none focus:border-brand-blue"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-graphite font-display">
+                  Section Scope / Short Description
+                </label>
+                <input
+                  value={section.description || ''}
+                  onChange={(e) => updateSection(sIdx, 'description', e.target.value)}
+                  placeholder="e.g. End-to-end residential civil execution..."
+                  className="w-full px-3 py-2 text-xs bg-surface-white border border-border-neutral rounded-sm text-graphite outline-none focus:border-brand-blue"
+                />
+              </div>
+            </div>
+
+            {/* Sub-Services List */}
+            <div className="pt-3 border-t border-[#F0EFEA] space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-brand-blue font-display flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[15px]">list_alt</span>
+                  Sub-Services &amp; Modules
+                </label>
+                <button
+                  type="button"
+                  onClick={() => addSubService(sIdx)}
+                  className="text-[10px] font-bold uppercase tracking-wider text-brand-blue border border-brand-blue/30 px-2.5 py-1 rounded-sm hover:bg-brand-blue/5 transition-colors font-display flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[13px]">add</span> Add Sub-Service
+                </button>
+              </div>
+
+              {(section.services || []).length === 0 ? (
+                <p className="text-xs text-soft-grey italic py-2">No sub-services in this section yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {(section.services || []).map((sub, subIdx) => (
+                    <div
+                      key={subIdx}
+                      className="p-3 border border-border-neutral rounded-sm bg-[#FAF9F6] space-y-3 relative group"
+                    >
+                      <div className="flex items-center justify-between border-b border-[#E5E3DC] pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-soft-grey font-mono">
+                            SUB-SERVICE {sIdx + 1}.{subIdx + 1}
+                          </span>
+                          {/* isActive toggle — deactivates without deleting */}
+                          <button
+                            type="button"
+                            onClick={() => updateSubService(sIdx, subIdx, 'isActive', !sub.isActive)}
+                            className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-xs border transition-colors font-mono ${
+                              sub.isActive !== false
+                                ? 'bg-brand-green/10 text-brand-green border-brand-green/25 hover:bg-brand-green/20'
+                                : 'bg-surface-muted text-soft-grey border-border-neutral hover:bg-border-neutral'
+                            }`}
+                            title={sub.isActive !== false ? 'Click to hide this sub-service from the public page' : 'Click to show this sub-service on the public page'}
+                          >
+                            {sub.isActive !== false ? '● Active' : '○ Hidden'}
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveSubService(sIdx, subIdx, -1)}
+                            disabled={subIdx === 0}
+                            className="p-0.5 text-soft-grey hover:text-graphite disabled:opacity-20"
+                            title="Move up"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveSubService(sIdx, subIdx, 1)}
+                            disabled={subIdx === (section.services || []).length - 1}
+                            className="p-0.5 text-soft-grey hover:text-graphite disabled:opacity-20"
+                            title="Move down"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSubService(sIdx, subIdx)}
+                            className="p-0.5 text-soft-grey hover:text-red-500 transition-colors ml-2"
+                            title="Remove sub-service"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                        {/* Title & Description */}
+                        <div className="sm:col-span-8 space-y-2">
+                          <input
+                            value={sub.title || ''}
+                            onChange={(e) => updateSubService(sIdx, subIdx, 'title', e.target.value)}
+                            placeholder="Sub-service title (e.g. Villas, Annual Maintenance Contract)"
+                            className="w-full px-3 py-1.5 text-xs bg-white border border-border-neutral rounded-sm text-graphite font-bold outline-none focus:border-brand-blue"
+                          />
+                          <textarea
+                            value={sub.description || ''}
+                            onChange={(e) => updateSubService(sIdx, subIdx, 'description', e.target.value)}
+                            rows={2}
+                            placeholder="Short description of this sub-service..."
+                            className="w-full px-3 py-1.5 text-xs bg-white border border-border-neutral rounded-sm text-graphite outline-none focus:border-brand-blue resize-y"
+                          />
+                        </div>
+
+                        {/* Image preview & selector */}
+                        <div className="sm:col-span-4 space-y-1.5">
+                          <div className="relative aspect-video w-full rounded-sm overflow-hidden border border-border-neutral bg-neutral-100 flex items-center justify-center">
+                            {sub.image ? (
+                              <img src={sub.image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[10px] text-soft-grey font-mono">No Image</span>
+                            )}
+                          </div>
+                          <div className="flex gap-1.5">
+                            <input
+                              value={sub.image || ''}
+                              onChange={(e) => updateSubService(sIdx, subIdx, 'image', e.target.value)}
+                              placeholder="Image URL or choose..."
+                              className="w-full px-2 py-1 text-[11px] bg-white border border-border-neutral rounded-sm text-graphite font-mono outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => onPickImage(sIdx, subIdx)}
+                              className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-brand-blue text-white rounded-sm hover:bg-brand-blue-hover transition-colors shrink-0 font-display"
+                            >
+                              Browse
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {sections.length > 0 && (
+        <button
+          type="button"
+          onClick={addSection}
+          className="w-full py-2.5 border-2 border-dashed border-border-neutral hover:border-brand-blue rounded-sm text-xs font-bold uppercase tracking-wider text-graphite hover:text-brand-blue transition-colors font-display flex items-center justify-center gap-1.5 bg-white"
+        >
+          <span className="material-symbols-outlined text-[16px]">add</span> Add Another Section / Subheading
+        </button>
+      )}
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════
 // SERVICE EDITOR
 // ═══════════════════════════════════════════════════════════════
 const EMPTY_FORM = {
-  title: '', slug: '', category: 'construction',
-  description: '', shortDescription: '',
-  benefits: [], features: [],
-  image: '', gallery: [],
-  priceNote: '', legalNote: '',
+  title: '',
+  slug: '',
+  order: 0,
+  category: 'construction',
+
+  description: '',
+  shortDescription: '',
+
+  image: '',
+  gallery: [],
+  benefits: [],
+  features: [],
+
+  
+  sections: [],
+
+  priceNote: '',
+  legalNote: '',
   isActive: true,
 };
 
@@ -77,7 +438,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
   const [errors,        setErrors]        = useState({});
   const [apiError,      setApiError]      = useState('');
   const [conflict,      setConflict]      = useState(null); // 409 data
-  const [pickerTarget,  setPickerTarget]  = useState(null); // 'cover' | 'gallery'
+  const [pickerTarget,  setPickerTarget]  = useState(null); // 'cover' | 'gallery' | {type:'subservice', sIdx, subIdx}
   const [slugManual,    setSlugManual]    = useState(false);
 
   // ── Load existing service ────────────────────────────────────
@@ -85,7 +446,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
     if (!serviceId) return;
     (async () => {
       try {
-        const res = await adminApi.get(`${API}/services/${serviceId}`);
+        const res = await adminApi.get(`${API}/services/id/${serviceId}`);
         const d = res.data.data;
         setForm({
           title: d.title || '', slug: d.slug || '',
@@ -95,6 +456,8 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
           image: d.image || '', gallery: d.gallery || [],
           priceNote: d.priceNote || '', legalNote: d.legalNote || '',
           isActive: d.isActive ?? true,
+          sections: d.sections || [],
+
         });
         setLastUpdatedAt(d.updatedAt);
         setSlugManual(true); // existing slug — don't auto-generate
@@ -166,7 +529,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
     setConflict(null);
     setLoading(true);
     try {
-      const res = await adminApi.get(`${API}/services/${serviceId}`);
+      const res = await adminApi.get(`${API}/services/id/${serviceId}`);
       const d = res.data.data;
       setForm({
         title: d.title || '', slug: d.slug || '', category: d.category || 'construction',
@@ -174,7 +537,9 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
         benefits: d.benefits || [], features: d.features || [],
         image: d.image || '', gallery: d.gallery || [],
         priceNote: d.priceNote || '', legalNote: d.legalNote || '',
+        sections: d.sections || [],
         isActive: d.isActive ?? true,
+
       });
       setLastUpdatedAt(d.updatedAt);
     } catch { setApiError('Reload failed.'); }
@@ -187,12 +552,24 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
       set('image', asset.url);
     } else if (pickerTarget === 'gallery') {
       set('gallery', [...(form.gallery || []), asset.url]);
+    } else if (pickerTarget && pickerTarget.type === 'subservice') {
+      // Update a specific sub-service image
+      const { sIdx, subIdx } = pickerTarget;
+      const updatedSections = [...(form.sections || [])];
+      const currServices = [...(updatedSections[sIdx]?.services || [])];
+      currServices[subIdx] = { ...currServices[subIdx], image: asset.url };
+      updatedSections[sIdx] = { ...updatedSections[sIdx], services: currServices };
+      set('sections', updatedSections);
     }
     setPickerTarget(null);
   };
 
   const removeGalleryImage = (idx) =>
     set('gallery', form.gallery.filter((_, i) => i !== idx));
+
+  const handlePickSubServiceImage = (sIdx, subIdx) => {
+    setPickerTarget({ type: 'subservice', sIdx, subIdx });
+  };
 
   if (loading) {
     return (
@@ -303,6 +680,26 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
               </div>
             </section>
 
+            {/* ── Service Sections & Sub-Services ── */}
+            <section className="bg-white border border-border-neutral rounded-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-border-neutral bg-surface-warm flex items-center justify-between">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-graphite font-display">Service Sections &amp; Sub-Services</h2>
+                  <p className="text-[11px] text-soft-grey mt-0.5">Add subheadings (e.g. "A. Residential Construction") and their child modules (e.g. "Villas", "Apartments").</p>
+                </div>
+                <span className="px-2 py-0.5 text-[10px] font-bold text-brand-blue border border-brand-blue/30 rounded-xs font-mono">
+                  {(form.sections || []).length} SECTION{(form.sections || []).length !== 1 ? 'S' : ''}
+                </span>
+              </div>
+              <div className="p-5">
+                <SectionsEditor
+                  sections={form.sections || []}
+                  onChange={v => set('sections', v)}
+                  onPickImage={handlePickSubServiceImage}
+                />
+              </div>
+            </section>
+
             {/* Benefits */}
             <section className="bg-white border border-border-neutral rounded-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-border-neutral bg-surface-warm">
@@ -328,7 +725,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
             {/* Pricing & Legal */}
             <section className="bg-white border border-border-neutral rounded-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-border-neutral bg-surface-warm">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-graphite font-display">Pricing & Legal</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-graphite font-display">Pricing &amp; Legal</h2>
               </div>
               <div className="p-5 space-y-5">
                 <div className="space-y-1">
@@ -341,7 +738,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
                   <label className="block text-xs font-bold uppercase tracking-wider text-graphite font-display">Legal Terms</label>
                   <textarea value={form.legalNote} onChange={e => set('legalNote', e.target.value)} rows={2}
                     className="w-full px-3 py-2.5 text-sm bg-surface-white border border-border-neutral rounded-sm text-graphite outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-colors resize-y"
-                    placeholder="e.g. Subject to site assessment. T&C apply." />
+                    placeholder="e.g. Subject to site assessment. T&amp;C apply." />
                 </div>
               </div>
             </section>
@@ -364,7 +761,7 @@ const ServiceEditor = ({ serviceId, onBack, onSaved }) => {
                   <select value={form.category} onChange={e => set('category', e.target.value)}
                     className={`w-full px-3 py-2.5 text-sm bg-surface-white border rounded-sm text-graphite outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-colors appearance-none cursor-pointer ${errors.category ? 'border-red-400' : 'border-border-neutral'}`}>
                     {CATEGORIES.map(c => (
-                      <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                      <option key={c} value={c}>{CATEGORY_LABELS[c] || c}</option>
                     ))}
                   </select>
                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import adminApi from '../../utils/adminApi';
 import MediaLibrary from '../../components/admin/MediaLibrary';
 
-const API = 'http://localhost:5000/api';
+const API = '';
 
 const ROLES = ['director', 'project-manager', 'civil-engineer', 'architect', 'site-engineer', 'supervisor', 'other'];
 
@@ -424,7 +424,7 @@ const TeamList = ({ onCreate, onEdit }) => {
           <table className="w-full text-sm text-left">
             <thead className="border-b border-border-neutral bg-surface-warm">
               <tr>
-                {['Name', 'Role', 'Status', 'Actions'].map(h => (
+                {['Name', 'Role', 'Order', 'Status', 'Actions'].map(h => (
                   <th key={h} className={`py-3 px-5 text-xs font-bold uppercase tracking-wider text-soft-grey font-display ${h === 'Actions' ? 'text-right' : ''}`}>{h}</th>
                 ))}
               </tr>
@@ -443,8 +443,13 @@ const TeamList = ({ onCreate, onEdit }) => {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-soft-grey capitalize">{mem.role.replace('-', ' ')}</td>
+                  <td className="py-3.5 px-5 text-soft-grey capitalize">{mem.role.replace(/-/g, ' ')}</td>
                   <td className="py-3.5 px-5">
+                    <span className="inline-flex items-center justify-center w-7 h-7 text-xs font-bold font-display bg-surface-warm border border-border-neutral rounded-sm text-graphite">
+                      {mem.order ?? 0}
+                    </span>
+                  </td>
+                <td className="py-3.5 px-5">
                     <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide border ${mem.isActive ? 'bg-brand-green/10 text-brand-green border-brand-green/20' : 'bg-surface-muted text-soft-grey border-border-neutral'}`}>
                       {mem.isActive ? 'Active' : 'Inactive'}
                     </span>
