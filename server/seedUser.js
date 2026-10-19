@@ -14,7 +14,7 @@ async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to MongoDB Atlas...');
 
-  const defaultPassword = process.env.ADMIN_SEED_PASSWORD || 'Ayan@1234';
+  const defaultPassword = process.env.ADMIN_SEED_PASSWORD || 'Ayan1234';
   const hashedPassword = await bcrypt.hash(defaultPassword, 12);
 
   // 1. Superadmin account
