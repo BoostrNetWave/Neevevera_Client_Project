@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
 import { FiArrowLeft, FiCheckCircle, FiUploadCloud, FiSend, FiAlertCircle } from 'react-icons/fi'
 import { careers as mockCareers } from '../data/mockData'
 import { useFormSubmit } from '../hooks/useFormSubmit'
-import { uploadResume, submitApplication } from '../services/careers.api'
+import { uploadResume, uploadSupportingDoc, submitApplication } from '../services/careers.api'
 import axios from 'axios'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
@@ -15,6 +15,7 @@ const Application = () => {
   const [job, setJob] = useState(null)
   const [loadingJob, setLoadingJob] = useState(true)
   const [resumeFile, setResumeFile] = useState(null)
+  const [supportingDocFile, setSupportingDocFile] = useState(null)
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -47,13 +48,19 @@ const Application = () => {
       const uploadRes = await uploadResume(resumeFile)
       resumeUrl = uploadRes.url || uploadRes.secure_url || ''
     }
+    let supportingDocUrl = ''
+    if (supportingDocFile) {
+      const uploadDocRes = await uploadSupportingDoc(supportingDocFile)
+      supportingDocUrl = uploadDocRes.url || uploadDocRes.secure_url || ''
+    }
     return submitApplication({
       ...payload,
-      resumeUrl
+      resumeUrl,
+      supportingDocUrl,
     })
   }
 
-  const { submit, status, errorMsg, reset } = useFormSubmit(handleFullSubmit)
+  const { submit, status, errorMsg } = useFormSubmit(handleFullSubmit)
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -63,16 +70,27 @@ const Application = () => {
     qualification: 'B.Tech Civil Engineering',
     currentLocation: '',
     expectedCtc: '',
+    skills: '',
     notes: '',
   })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Build rich coverLetter text that includes self-declared skills for keyword matching
+    const candidateText = [
+      formData.notes,
+      formData.skills ? `Key Skills: ${formData.skills}` : '',
+      `Experience: ${formData.experience}`,
+      `Qualification: ${formData.qualification}`,
+      `Location: ${formData.currentLocation}`,
+      formData.expectedCtc ? `Expected CTC: ${formData.expectedCtc}` : '',
+    ].filter(Boolean).join('. ')
+
     await submit({
       name: formData.fullName,
       email: formData.email,
       phone: formData.phone,
-      coverLetter: formData.notes || `Experience: ${formData.experience}. Qualification: ${formData.qualification}. Current Location: ${formData.currentLocation}. Expected CTC: ${formData.expectedCtc}`,
+      coverLetter: candidateText,
       jobTitle: job?.title,
       jobSlug: currentSlug,
       jobId: job?._id || job?.id,
@@ -252,6 +270,24 @@ const Application = () => {
                 </div>
               </div>
 
+              {/* Skills field — directly feeds the skill match engine */}
+              <div>
+                <label className="block text-xs font-medium uppercase text-[#6B6B67] mb-1 font-semibold">
+                  Key Technical Skills *
+                  <span className="ml-1.5 text-[10px] normal-case text-[#07558F] font-normal">(used for AI skill matching)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  disabled={status === 'loading'}
+                  value={formData.skills}
+                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                  placeholder="AutoCAD, STAAD Pro, Revit, RCC Design, IS 456, Primavera P6, MS Project, BOQ Preparation, CPWD Norms..."
+                  className="w-full text-xs font-medium px-3 py-2.5 bg-[#FAF9F6] border border-[#D8D8D2] focus:outline-none focus:border-[#07558F]"
+                ></textarea>
+                <p className="text-[10px] text-[#6B6B67] mt-0.5">List software tools, design codes, and site skills separated by commas.</p>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium uppercase text-[#6B6B67] mb-1 font-semibold">
                   Field Summary &amp; Projects Managed
@@ -266,21 +302,69 @@ const Application = () => {
                 ></textarea>
               </div>
 
-              <div className="p-4 border border-dashed border-[#D8D8D2] bg-[#FAF9F6] text-center relative overflow-hidden">
-                <FiUploadCloud className="mx-auto text-2xl text-[#6B6B67] mb-1" />
-                <div className="text-xs font-medium font-bold text-[#111822]">
-                  {resumeFile ? resumeFile.name : 'Attach Resume / Curriculum Vitae'}
+              <div className="space-y-3 pt-2">
+                {/* Slot 1: Resume */}
+                <div className="p-4 border border-dashed border-[#D8D8D2] bg-[#FAF9F6] text-center relative overflow-hidden transition-colors hover:border-[#07558F]">
+                  <FiUploadCloud className="mx-auto text-2xl text-[#6B6B67] mb-1" />
+                  <div className="text-xs font-medium font-bold text-[#111822]">
+                    {resumeFile ? resumeFile.name : 'Attach Resume / Curriculum Vitae *'}
+                  </div>
+                  <div className="text-[10px] font-medium text-[#6B6B67] mt-0.5">
+                    PDF or DOCX up to 10MB
+                  </div>
+                  <input 
+                    type="file" 
+                    accept=".pdf,.doc,.docx"
+                    disabled={status === 'loading'}
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file && file.size > 10 * 1024 * 1024) {
+                        alert('Resume file size must be within 10MB.')
+                        e.target.value = ''
+                        return
+                      }
+                      setResumeFile(file)
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                  />
                 </div>
-                <div className="text-[10px] font-medium text-[#6B6B67] mt-0.5">
-                  PDF, DOCX up to 10MB
+
+                {/* Slot 2: Feature G — Supporting Document */}
+                <div className="p-4 border border-dashed border-[#D8D8D2] bg-[#FAF9F6] text-center relative overflow-hidden transition-colors hover:border-[#07558F]">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-medium font-bold text-[#111822]">
+                    <FiUploadCloud className="text-base text-[#6B6B67]" />
+                    <span>
+                      {supportingDocFile 
+                        ? supportingDocFile.name 
+                        : 'Additional Technical Work Portfolio / Structural Calculation Sheets'}
+                    </span>
+                    <span className="text-[10px] font-normal text-[#6B6B67] uppercase tracking-wider">(Optional)</span>
+                  </div>
+                  <div className="text-[10px] font-medium text-[#6B6B67] mt-0.5">
+                    PDF only • Max 10MB • Calculations, Drawings, PEB Models &amp; Design Proofs
+                  </div>
+                  <input 
+                    type="file" 
+                    accept=".pdf,application/pdf"
+                    disabled={status === 'loading'}
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                        alert('Supporting document must be in PDF format.')
+                        e.target.value = ''
+                        return
+                      }
+                      if (file.size > 10 * 1024 * 1024) {
+                        alert('Supporting document size must be within 10MB.')
+                        e.target.value = ''
+                        return
+                      }
+                      setSupportingDocFile(file)
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                  />
                 </div>
-                <input 
-                  type="file" 
-                  accept=".pdf,.doc,.docx"
-                  disabled={status === 'loading'}
-                  onChange={(e) => setResumeFile(e.target.files[0])}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
-                />
               </div>
 
               <button

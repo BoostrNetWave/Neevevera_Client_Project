@@ -142,6 +142,7 @@ import companyRoutes      from './routes/company.routes.js';
 import searchRoutes       from './routes/search.routes.js';
 import galleryRoutes      from './routes/gallery.routes.js';
 import homeContentRoutes  from './routes/homeContent.routes.js';
+import serviceAreaRoutes from './routes/serviceArea.routes.js';
 
 // ── Mount routes ──────────────────────────────────────────────
 // Public read — global rate limit only
@@ -155,6 +156,11 @@ app.use('/api/company',      companyRoutes);
 app.use('/api/gallery',      galleryRoutes);
 app.use('/api/home',         homeContentRoutes);
 app.use('/api/search',       searchRoutes);
+
+// Service Areas / PIN coverage (Feature Flagged)
+if (process.env.FEATURE_SERVICE_AREAS === 'true' || process.env.NODE_ENV === 'test') {
+  app.use('/api/service-areas', serviceAreaRoutes);
+}
 
 // Public write endpoints have their own form-submission write limiters attached per-route
 app.use('/api/enquiries',    enquiryRoutes);

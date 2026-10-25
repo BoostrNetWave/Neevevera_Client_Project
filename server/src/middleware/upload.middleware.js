@@ -30,6 +30,7 @@ export const UPLOAD_CONTEXTS = {
   galleryMedia:   { types: ['image/jpeg', 'image/png', 'image/webp'], maxSizeMB: 8,   isVideo: false },
   galleryVideo:   { types: ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'], maxSizeMB: 200, isVideo: true },
   resume:         { types: ['application/pdf'],                        maxSizeMB: 5,   isVideo: false },
+  supportingDoc:  { types: ['application/pdf'],                        maxSizeMB: 10,  isVideo: false },
   vendorDocument: { types: ['application/pdf', 'image/jpeg', 'image/png'], maxSizeMB: 10, isVideo: false },
 };
 

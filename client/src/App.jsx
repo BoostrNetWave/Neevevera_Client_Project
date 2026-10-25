@@ -26,6 +26,7 @@ import Podcast from './pages/Podcast'
 import Contact from './pages/Contact'
 import Search from './pages/Search'
 import Vendors from './pages/Vendors'
+import Estimate from './pages/Estimate'
 import NotFound from './pages/NotFound'
 
 // Phase 3 — Admin Pages
@@ -47,6 +48,7 @@ import AdminVendors      from './pages/admin/Vendors'
 import AdminNewsletter   from './pages/admin/Newsletter'
 import AdminUsers        from './pages/admin/Users'
 import AdminApplications from './pages/admin/Applications'
+import AdminServiceAreas from './pages/admin/ServiceAreas'
 
 const ProtectedRoute = ({ children }) => {
   const authed = localStorage.getItem('admin_authed');
@@ -83,6 +85,7 @@ const App = () => {
             <Route path="contact" element={<Contact />} />
             <Route path="search" element={<Search />} />
             <Route path="vendors" element={<Vendors />} />
+            <Route path="estimate" element={<Estimate />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
@@ -112,6 +115,7 @@ const App = () => {
             <Route path="careers"       element={<AdminCareers />} />
             <Route path="applications"  element={<AdminApplications />} />
             <Route path="vendors"       element={<AdminVendors />} />
+            <Route path="service-areas" element={<AdminServiceAreas />} />
 
             {/* System */}
             <Route path="users"         element={<AdminUsers />} />

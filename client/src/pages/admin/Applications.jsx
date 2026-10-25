@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import adminApi from '../../utils/adminApi';
+import { calculateSkillMatch } from '../../utils/skillMatcher';
 
 const STATUSES = ['received', 'reviewed', 'shortlisted', 'rejected'];
 
@@ -21,6 +22,8 @@ const AdminApplications = () => {
   const [searchQuery, setSearchQuery]     = useState('');
   const [updatingId, setUpdatingId]       = useState(null);
   const [expandedNotesId, setExpandedNotesId] = useState(null);
+  const [evaluatingApp, setEvaluatingApp] = useState(null); // Feature F inspector modal state
+  const [runningDeepScan, setRunningDeepScan] = useState(false);
 
   // ── Fetch Jobs and All Applications ──────────────────────────
   const fetchData = useCallback(async () => {
@@ -54,11 +57,34 @@ const AdminApplications = () => {
                 jobSlug: job.slug,
                 jobDepartment: job.department,
                 jobLocation: job.location,
+                supportingDocUrl: app.supportingDocUrl,
+                evaluation: app.evaluation,
+                requiredSkills: job.requiredSkills || [],
+                preferredSkills: job.preferredSkills || [],
+                requirements: job.requirements || [],
               });
             }
           }
         }
       }
+
+      // Link job skill lists if not already attached
+      const jobMap = new Map(loadedJobs.map(j => [j.slug || j._id, j]));
+      loadedApps = loadedApps.map(app => {
+        const job = jobMap.get(app.jobSlug) || jobMap.get(app.jobId);
+        return {
+          ...app,
+          requiredSkills: (app.requiredSkills && app.requiredSkills.length > 0)
+            ? app.requiredSkills
+            : (job?.requiredSkills || []),
+          preferredSkills: (app.preferredSkills && app.preferredSkills.length > 0)
+            ? app.preferredSkills
+            : (job?.preferredSkills || []),
+          requirements: (app.requirements && app.requirements.length > 0)
+            ? app.requirements
+            : (job?.requirements || []),
+        };
+      });
 
       setAllApplications(loadedApps);
     } catch (err) {
@@ -101,6 +127,36 @@ const AdminApplications = () => {
       alert(err.response?.data?.message || 'Failed to update application status.');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  // ── Deep Text Evaluation (Feature F) ────────────────────────
+  const handleRunDeepScan = async (app) => {
+    if (!app) return;
+    setRunningDeepScan(true);
+    try {
+      const url = app.jobSlug
+        ? `/careers/${app.jobSlug}/applications/${app._id}/evaluate`
+        : `/careers/applications/${app._id}/evaluate`;
+      const res = await adminApi.post(url);
+      if (res.data.success && res.data.data) {
+        const evaluation = res.data.data;
+        setAllApplications(prev =>
+          prev.map(a => (a._id === app._id ? { ...a, evaluation } : a))
+        );
+        setEvaluatingApp(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            app: { ...prev.app, evaluation },
+            match: evaluation,
+          };
+        });
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to extract text from candidate resume.');
+    } finally {
+      setRunningDeepScan(false);
     }
   };
 
@@ -392,6 +448,7 @@ const AdminApplications = () => {
                     <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Role Applied For</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Contact</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Applied Date</th>
+                    <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Skill Match</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Status</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-soft-grey font-display">Action</th>
                   </tr>
@@ -407,7 +464,7 @@ const AdminApplications = () => {
                           {/* Candidate info */}
                           <td className="py-3.5 px-4 align-top">
                             <span className="font-bold text-graphite block text-sm">{app.name || 'Anonymous Applicant'}</span>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
                               {app.resumeUrl ? (
                                 <a
                                   href={app.resumeUrl}
@@ -420,6 +477,20 @@ const AdminApplications = () => {
                                 </a>
                               ) : (
                                 <span className="text-[10px] text-soft-grey italic">No resume</span>
+                              )}
+
+                              {/* Feature G: Supporting Document link */}
+                              {app.supportingDocUrl && (
+                                <a
+                                  href={app.supportingDocUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:underline bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-xs"
+                                  title="Additional Technical Work Portfolio / Structural Calculation Sheets"
+                                >
+                                  <span className="material-symbols-outlined text-[13px]">architecture</span>
+                                  Portfolio / Calc Sheets
+                                </a>
                               )}
 
                               {app.coverLetter && (
@@ -461,6 +532,51 @@ const AdminApplications = () => {
                               : '—'}
                           </td>
 
+                          {/* Feature F: Skill Match Score */}
+                          <td className="py-3.5 px-4 align-top">
+                            {(() => {
+                              const reqSkills = (app.requiredSkills && app.requiredSkills.length > 0)
+                                ? app.requiredSkills
+                                : (app.requirements || []);
+                              const prefSkills = app.preferredSkills || [];
+                              const candidateText = [
+                                app.coverLetter || '',
+                                app.name || '',
+                                app.jobTitle || '',
+                                app.jobDepartment || '',
+                              ].join(' ');
+                              const match = app.evaluation || calculateSkillMatch(candidateText, reqSkills, prefSkills);
+
+                              if (!reqSkills.length && !prefSkills.length) {
+                                return (
+                                  <span className="text-[10px] text-soft-grey italic font-mono">
+                                    No JD Skills
+                                  </span>
+                                );
+                              }
+
+                              const score = match.overallScore ?? 0;
+                              const badgeStyle =
+                                score >= 70
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  : score >= 40
+                                  ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                  : 'bg-rose-50 text-rose-800 border-rose-300';
+
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => setEvaluatingApp({ app, match, reqSkills, prefSkills })}
+                                  className={`px-2 py-1 rounded-sm text-xs font-bold font-mono border flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer shadow-2xs ${badgeStyle}`}
+                                  title="Click to view keyword breakdown & match explanation"
+                                >
+                                  <span className="material-symbols-outlined text-[13px]">query_stats</span>
+                                  <span>{score}% Match</span>
+                                </button>
+                              );
+                            })()}
+                          </td>
+
                           {/* Status Badge */}
                           <td className="py-3.5 px-4 align-top">
                             <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide border inline-block ${
@@ -497,7 +613,7 @@ const AdminApplications = () => {
                         {/* Expandable Cover Letter / Notes Row */}
                         {isExpanded && app.coverLetter && (
                           <tr className="bg-surface-warm/70">
-                            <td colSpan={6} className="px-4 py-3 border-t border-border-neutral/60">
+                            <td colSpan={7} className="px-4 py-3 border-t border-border-neutral/60">
                               <div className="text-xs">
                                 <span className="font-bold text-graphite uppercase tracking-wider block mb-1 font-display">
                                   Cover Letter / Application Notes:
@@ -516,6 +632,220 @@ const AdminApplications = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Feature F: Skill Match Inspector Modal ── */}
+      {evaluatingApp && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-border-neutral rounded-sm max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border-neutral bg-surface-warm">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-blue font-display">
+                  Candidate Qualification Analysis
+                </div>
+                <h3 className="font-display font-bold text-base text-graphite mt-0.5">
+                  {evaluatingApp.app.name || 'Anonymous Applicant'}
+                </h3>
+                <div className="text-xs text-soft-grey mt-0.5">
+                  Applying for: <span className="font-medium text-graphite">{evaluatingApp.app.jobTitle}</span>
+                  {evaluatingApp.app.jobDepartment && ` • ${evaluatingApp.app.jobDepartment}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEvaluatingApp(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-sm text-soft-grey hover:text-graphite hover:bg-black/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-5 text-sm">
+              {/* Formula & Overall Metric Box */}
+              <div className="p-4 bg-surface-warm border border-border-neutral rounded-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-soft-grey font-display">
+                    Weighted Evaluation Formula
+                  </div>
+                  <div className="font-mono text-xs text-graphite mt-1 bg-white px-2.5 py-1.5 rounded-xs border border-border-neutral inline-block">
+                    Overall Score = 0.70 × (Required Match) + 0.30 × (Preferred Match)
+                  </div>
+                  <p className="text-xs text-soft-grey mt-2">
+                    {evaluatingApp.match.explanation || 'Dynamic keyword comparison based on job description.'}
+                  </p>
+                </div>
+
+                <div className="text-center sm:text-right shrink-0 bg-white p-3 rounded-sm border border-border-neutral min-w-[120px]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-soft-grey font-display block">
+                    Overall Score
+                  </span>
+                  <div className={`text-3xl font-black font-display mt-0.5 ${
+                    (evaluatingApp.match.overallScore ?? 0) >= 70
+                      ? 'text-emerald-700'
+                      : (evaluatingApp.match.overallScore ?? 0) >= 40
+                      ? 'text-amber-700'
+                      : 'text-rose-700'
+                  }`}>
+                    {evaluatingApp.match.overallScore ?? 0}%
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-soft-grey font-mono block mt-0.5">
+                    {(evaluatingApp.match.overallScore ?? 0) >= 70 ? 'High Match' : (evaluatingApp.match.overallScore ?? 0) >= 40 ? 'Moderate Match' : 'Low Match'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Required Skills Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-graphite font-display flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-brand-blue"></span>
+                    Required Skills (Weight: 70%)
+                  </span>
+                  <span className="text-xs font-mono font-bold text-graphite">
+                    {evaluatingApp.match.matchedRequired?.length || 0} of {evaluatingApp.match.totalRequired || evaluatingApp.reqSkills?.length || 0} matched
+                    ({evaluatingApp.match.requiredScore ?? 0}%)
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-3 bg-surface-white border border-border-neutral rounded-sm">
+                  {evaluatingApp.match.matchedRequired?.map(skill => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    >
+                      <span className="material-symbols-outlined text-[13px] text-emerald-600">check_circle</span>
+                      {skill}
+                    </span>
+                  ))}
+                  {evaluatingApp.match.missingRequired?.map(skill => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200"
+                    >
+                      <span className="material-symbols-outlined text-[13px] text-rose-500">cancel</span>
+                      {skill}
+                    </span>
+                  ))}
+                  {(!evaluatingApp.match.matchedRequired?.length && !evaluatingApp.match.missingRequired?.length) && (
+                    <span className="text-xs text-soft-grey italic">No required skills defined in job opening.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Preferred Skills Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-graphite font-display flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Preferred Skills (Weight: 30%)
+                  </span>
+                  <span className="text-xs font-mono font-bold text-graphite">
+                    {evaluatingApp.match.matchedPreferred?.length || 0} of {evaluatingApp.match.totalPreferred || evaluatingApp.prefSkills?.length || 0} matched
+                    ({evaluatingApp.match.preferredScore ?? 0}%)
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-3 bg-surface-white border border-border-neutral rounded-sm">
+                  {evaluatingApp.match.matchedPreferred?.map(skill => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-medium bg-blue-50 text-blue-800 border border-blue-200"
+                    >
+                      <span className="material-symbols-outlined text-[13px] text-blue-600">check_circle</span>
+                      {skill}
+                    </span>
+                  ))}
+                  {evaluatingApp.match.missingPreferred?.map(skill => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-medium bg-surface-warm text-soft-grey border border-border-neutral"
+                    >
+                      <span className="material-symbols-outlined text-[13px] text-soft-grey">remove_circle_outline</span>
+                      {skill}
+                    </span>
+                  ))}
+                  {(!evaluatingApp.match.matchedPreferred?.length && !evaluatingApp.match.missingPreferred?.length) && (
+                    <span className="text-xs text-soft-grey italic">No preferred skills defined in job opening.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Candidate Documents & Deep Scan Trigger */}
+              <div className="p-3 bg-surface-warm border border-border-neutral rounded-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {evaluatingApp.app.resumeUrl && (
+                    <a
+                      href={evaluatingApp.app.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-brand-blue hover:underline bg-white border border-border-neutral px-2.5 py-1.5 rounded-sm"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      Open Resume PDF
+                    </a>
+                  )}
+                  {evaluatingApp.app.supportingDocUrl && (
+                    <a
+                      href={evaluatingApp.app.supportingDocUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline bg-white border border-border-neutral px-2.5 py-1.5 rounded-sm"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                      Open Portfolio PDF
+                    </a>
+                  )}
+                </div>
+
+                {evaluatingApp.app.resumeUrl && (
+                  <button
+                    type="button"
+                    disabled={runningDeepScan}
+                    onClick={() => handleRunDeepScan(evaluatingApp.app)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider rounded-sm font-display transition-colors"
+                  >
+                    {runningDeepScan ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                        <span>Extracting PDF Text…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[14px]">sync</span>
+                        <span>Run Deep PDF Extract</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Candidate Notes / Extracted Text Preview */}
+              {evaluatingApp.app.coverLetter && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-soft-grey font-display">
+                    Submitted Profile / Cover Notes:
+                  </span>
+                  <div className="text-xs text-soft-grey bg-surface-white p-3 rounded-sm border border-border-neutral whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto">
+                    {evaluatingApp.app.coverLetter}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 border-t border-border-neutral bg-surface-warm flex justify-end">
+              <button
+                type="button"
+                onClick={() => setEvaluatingApp(null)}
+                className="px-4 py-2 bg-graphite text-white text-xs font-bold uppercase tracking-wider rounded-sm font-display hover:bg-graphite/90"
+              >
+                Close Inspector
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -22,7 +22,7 @@ const enquirySchema = new mongoose.Schema(
     // ── Classification (enables single-inbox filtering) ────────
     type: {
       type: String,
-      enum: ['contact', 'rfq', 'vendor-rfq', 'general', 'service_inquiry'],
+      enum: ['contact', 'rfq', 'vendor-rfq', 'general', 'service_inquiry', 'coverage_request'],
       default: 'contact',
     },
 

@@ -15,6 +15,7 @@ export const MEDIA_FIELDS = {
   GalleryItem: ['imageUrl'],
   HomeContent: ['heroImage'],
   CompanyInfo: ['logoLight', 'logoDark', 'certifications[].imageUrl', 'awards[].imageUrl'],
+  Career:      ['applications[].resumeUrl', 'applications[].supportingDocUrl'],
 };
 
 /**

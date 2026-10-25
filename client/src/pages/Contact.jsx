@@ -147,10 +147,42 @@ const Contact = () => {
               <h2 className="font-display text-2xl font-bold text-[#111822]">
                 Submit Tender Document, RFQ or General Inquiry
               </h2>
-              <p className="text-xs text-[#6B6B67] font-medium mt-1">
-                Submissions are logged directly into our central estimating desk and acknowledged with a reference tracking ID.
-              </p>
-            </div>
+                <p className="text-xs text-[#6B6B67] font-medium mt-1">
+                  Submissions are logged directly into our central estimating desk and acknowledged with a reference tracking ID.
+                </p>
+              </div>
+
+            {/* Contextual Focus Banner if inquiring from a service or sub-service */}
+            {(serviceParam || moduleParam) && (
+              <div className="mb-6 p-3.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xs flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#07558F]" />
+                  <span className="text-[#1E40AF]">
+                    Inquiry Scope:{' '}
+                    <strong className="font-bold">
+                      {resolvedCategory}
+                      {moduleParam ? ` // ${moduleParam}` : ''}
+                    </strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm(prev => ({
+                      ...prev,
+                      serviceCategory: 'Tender / RFQ Submission',
+                      service: '',
+                      module: '',
+                      projectScope: '',
+                      type: 'contact',
+                    }));
+                  }}
+                  className="text-[11px] text-[#6B7280] hover:text-[#111822] underline cursor-pointer"
+                >
+                  Clear Selection
+                </button>
+              </div>
+            )}
 
             {status === 'success' ? (
               <div className="py-12 text-center bg-emerald-50 border border-emerald-200">

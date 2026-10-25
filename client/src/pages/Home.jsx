@@ -204,12 +204,16 @@ const Home = () => {
 <span>Rigorous Site HSE</span>
 </div>
 </div>
-<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+<div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 pt-1">
 <a className="px-6 py-3.5 bg-brand-blue hover:bg-brand-blue-hover text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 rounded-sm transition-colors shadow-sm" href={homeData?.heroCtaLink || '#portfolio'}>
 <span>{homeData?.heroCtaLabel || 'Explore Projects'}</span>
 <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
 </a>
-<a className="px-6 py-3.5 bg-white text-graphite border border-border-neutral hover:bg-surface-muted text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 rounded-sm transition-colors" href="#contact-block">
+<Link to="/estimate" className="px-5 py-3.5 bg-white text-[#07558F] border border-[#07558F]/30 hover:bg-[#07558F]/5 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 rounded-sm transition-colors">
+<span>Estimate Project Cost</span>
+<span className="material-symbols-outlined text-[15px]">calculate</span>
+</Link>
+<a className="px-5 py-3.5 bg-white text-graphite border border-border-neutral hover:bg-surface-muted text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 rounded-sm transition-colors" href="#contact-block">
 <span>Contact Us</span>
 <span className="material-symbols-outlined text-[15px]">north_east</span>
 </a>

@@ -1,4 +1,6 @@
 import Career from '../models/Career.js';
+import { incrementMediaUsage } from '../utils/mediaHelper.js';
+import { evaluateSkills, extractTextFromUrl } from '../utils/skillMatcher.js';
 
 // Admin: GET /api/careers/applications/count — aggregated counts across all jobs
 export const getApplicationsCount = async (req, res) => {
@@ -26,8 +28,19 @@ export const getCareerBySlug = async (req, res) => {
 export const applyToCareer = async (req, res) => {
   const job = await Career.findOne({ slug: req.params.slug, isActive: true });
   if (!job) return res.status(404).json({ success: false, message: 'Job not found' });
+  
   job.applications.push(req.body);
   await job.save();
+
+  // Wave 0: Prevent orphan cleanup from purging candidate resume after 48h
+  if (req.body.resumeUrl) {
+    await incrementMediaUsage(req.body.resumeUrl);
+  }
+  // Feature G: Claim optional supporting document asset
+  if (req.body.supportingDocUrl) {
+    await incrementMediaUsage(req.body.supportingDocUrl);
+  }
+
   res.status(201).json({ success: true, message: 'Application submitted successfully' });
 };
 
@@ -44,14 +57,19 @@ export const getAllApplications = async (req, res) => {
           email: app.email,
           phone: app.phone,
           resumeUrl: app.resumeUrl,
+          supportingDocUrl: app.supportingDocUrl,
           coverLetter: app.coverLetter,
           appliedAt: app.appliedAt,
           status: app.status || 'received',
+          evaluation: app.evaluation,
           jobId: job._id,
           jobTitle: job.title,
           jobSlug: job.slug,
           jobDepartment: job.department,
           jobLocation: job.location,
+          requiredSkills: job.requiredSkills || [],
+          preferredSkills: job.preferredSkills || [],
+          requirements: job.requirements || [],
         });
       }
     }
@@ -99,6 +117,74 @@ export const updateApplicationStatus = async (req, res) => {
 
   const updated = job.applications.id(req.params.appId);
   res.json({ success: true, data: updated });
+};
+
+// Admin: POST /api/careers/:slug/applications/:appId/evaluate or /api/careers/applications/:appId/evaluate
+// Evaluates candidate credentials/resume against job required and preferred skills
+export const evaluateApplication = async (req, res) => {
+  const query = req.params.slug
+    ? { slug: req.params.slug, 'applications._id': req.params.appId }
+    : { 'applications._id': req.params.appId };
+
+  const job = await Career.findOne(query);
+  if (!job) {
+    return res.status(404).json({ success: false, message: 'Job or application not found.' });
+  }
+
+  const app = job.applications.id(req.params.appId);
+  if (!app) {
+    return res.status(404).json({ success: false, message: 'Application not found.' });
+  }
+
+  // Extract text from resumeUrl if available; combine with coverLetter/notes
+  let extractedResumeText = '';
+  if (app.resumeUrl) {
+    try {
+      extractedResumeText = await extractTextFromUrl(app.resumeUrl);
+    } catch (err) {
+      console.warn(`[evaluateApplication] Text extraction failed for ${app.resumeUrl}:`, err.message);
+    }
+  }
+
+  const combinedCandidateText = [extractedResumeText, app.coverLetter || ''].filter(Boolean).join('\n\n');
+
+  // Match against job required and preferred skills (or fallback to requirements)
+  const reqSkills = (job.requiredSkills && job.requiredSkills.length > 0)
+    ? job.requiredSkills
+    : (job.requirements || []);
+  const prefSkills = job.preferredSkills || [];
+
+  const evaluationResult = evaluateSkills(combinedCandidateText, reqSkills, prefSkills);
+
+  app.evaluation = {
+    overallScore: evaluationResult.overallScore,
+    requiredScore: evaluationResult.requiredScore,
+    preferredScore: evaluationResult.preferredScore,
+    matchedRequired: evaluationResult.matchedRequired,
+    missingRequired: evaluationResult.missingRequired,
+    matchedPreferred: evaluationResult.matchedPreferred,
+    missingPreferred: evaluationResult.missingPreferred,
+    evaluatedAt: new Date(),
+  };
+
+  await job.save();
+
+  res.json({
+    success: true,
+    data: {
+      ...evaluationResult,
+      evaluatedAt: app.evaluation.evaluatedAt,
+      extractedTextLength: combinedCandidateText.length,
+      candidateTextSample: combinedCandidateText.slice(0, 300),
+    },
+  });
+};
+
+// Admin: POST /api/careers/evaluate-text
+export const evaluateTextDirect = async (req, res) => {
+  const { text, requiredSkills, preferredSkills } = req.body;
+  const result = evaluateSkills(text || '', requiredSkills || [], preferredSkills || []);
+  res.json({ success: true, data: result });
 };
 
 // ── Admin: Job CRUD ───────────────────────────────────────────

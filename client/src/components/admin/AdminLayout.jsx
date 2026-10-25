@@ -28,10 +28,11 @@ const NAV = [
   {
     group: 'Interactions',
     items: [
-      { label: 'Enquiries',       path: '/admin/enquiries',    icon: 'inbox' },
-      { label: 'Careers',         path: '/admin/careers',      icon: 'work' },
-      { label: 'Applications',    path: '/admin/applications', icon: 'badge' },
-      { label: 'Vendors',         path: '/admin/vendors',      icon: 'local_shipping' },
+      { label: 'Enquiries',        path: '/admin/enquiries',     icon: 'inbox' },
+      { label: 'Service Coverage', path: '/admin/service-areas',  icon: 'share_location' },
+      { label: 'Careers',          path: '/admin/careers',       icon: 'work' },
+      { label: 'Applications',     path: '/admin/applications',  icon: 'badge' },
+      { label: 'Vendors',          path: '/admin/vendors',       icon: 'local_shipping' },
     ],
   },
   {

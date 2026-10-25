@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "about": "हमारे बारे में",
+    "services": "सेवाएँ",
+    "projects": "परियोजनाएँ",
+    "more": "और",
+    "contact": "संपर्क",
+    "startProject": "प्रोजेक्ट शुरू करें",
+    "directoryOverview": "डायरेक्टरी अवलोकन",
+    "capabilities": "क्षमताएं",
+    "capabilitiesDesc": "सिविल एवं समुद्री कार्य",
+    "gallery": "गैलरी",
+    "galleryDesc": "साइट फोटोग्राफी एवं ड्रोन दृश्य",
+    "team": "टीम",
+    "teamDesc": "निदेशक मंडल एवं तकनीकी दल",
+    "careers": "करियर",
+    "careersDesc": "ओडिशा एवं पोर्ट ब्लेयर में अवसर",
+    "vendors": "विक्रेता",
+    "vendorsDesc": "खरीद एवं आपूर्ति पोर्टल",
+    "insights": "अंतर्दृष्टि",
+    "insightsDesc": "लेख एवं तकनीकी अपडेट",
+    "searchPlaceholder": "सिविल सेवाएं, परियोजनाएं या DSR आइटम खोजें...",
+    "search": "खोजें",
+    "searchPortal": "पोर्टल खोजें",
+    "estimateProjectCost": "प्रोजेक्ट लागत अनुमान",
+    "moreDestinations": "और अधिक (6 अनुभाग)"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिन्दी (Hindi)",
+    "or": "ଓଡ଼ିଆ (Odia)",
+    "bn": "বাংলা (Bengali)"
+  }
+}

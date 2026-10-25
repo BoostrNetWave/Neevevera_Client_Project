@@ -18,7 +18,7 @@ const mediaAssetSchema = new mongoose.Schema(
 
     context: {
       type: String,
-      enum: ['serviceImage', 'projectImage', 'teamPhoto', 'galleryMedia', 'galleryVideo', 'resume', 'vendorDocument'],
+      enum: ['serviceImage', 'projectImage', 'teamPhoto', 'galleryMedia', 'galleryVideo', 'resume', 'supportingDoc', 'vendorDocument'],
       required: true,
     },
 

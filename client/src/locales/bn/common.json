@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "about": "আমাদের সম্পর্কে",
+    "services": "সেবাসমূহ",
+    "projects": "প্রকল্পসমূহ",
+    "more": "আরও",
+    "contact": "যোগাযোগ",
+    "startProject": "প্রকল্প শুরু করুন",
+    "directoryOverview": "ডিরেক্টরি পরিদর্শন",
+    "capabilities": "সক্ষমতা",
+    "capabilitiesDesc": "সিভিল এবং সামুদ্রিক নির্মাণ",
+    "gallery": "গ্যালারি",
+    "galleryDesc": "সাইট ফটোগ্রাফি ও ড্রোন চিত্র",
+    "team": "টিম",
+    "teamDesc": "পরিচালক ও কারিগরি কর্মকর্তা",
+    "careers": "ক্যারিয়ার",
+    "careersDesc": "ওড়িশা ও পোর্ট ব্লেয়ারে সুযোগ",
+    "vendors": "ভেন্ডর",
+    "vendorsDesc": "সংগ্রহ ও সরবরাহ পোর্টাল",
+    "insights": "ইনসাইটস",
+    "insightsDesc": "নিবন্ধ ও প্রযুক্তিগত আপডেট",
+    "searchPlaceholder": "সিভিল সেবা, প্রকল্প বা DSR আইটেম খুঁজুন...",
+    "search": "অনুসন্ধান",
+    "searchPortal": "পোর্টাল অনুসন্ধান",
+    "estimateProjectCost": "প্রকল্পের খরচ অনুমান",
+    "moreDestinations": "আরও গন্তব্য (৬টি বিভাগ)"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिन्दी (Hindi)",
+    "or": "ଓଡ଼ିଆ (Odia)",
+    "bn": "বাংলা (Bengali)"
+  }
+}

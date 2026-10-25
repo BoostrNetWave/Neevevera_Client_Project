@@ -42,6 +42,7 @@ const StringListEditor = ({ label, placeholder, items, onChange }) => {
 const EMPTY_FORM = {
   title: '', slug: '', department: '', location: '', type: 'full-time',
   experience: '', description: '', responsibilities: [], requirements: [],
+  requiredSkills: [], preferredSkills: [],
   isActive: true, closingDate: '',
 };
 
@@ -65,6 +66,7 @@ const CareerEditor = ({ careerId, onBack, onSaved }) => {
           title: d.title || '', slug: d.slug || '', department: d.department || '',
           location: d.location || '', type: d.type || 'full-time', experience: d.experience || '',
           description: d.description || '', responsibilities: d.responsibilities || [], requirements: d.requirements || [],
+          requiredSkills: d.requiredSkills || [], preferredSkills: d.preferredSkills || [],
           isActive: d.isActive ?? true, closingDate: d.closingDate ? d.closingDate.split('T')[0] : '',
         });
         setLastUpdatedAt(d.updatedAt);
@@ -123,6 +125,7 @@ const CareerEditor = ({ careerId, onBack, onSaved }) => {
         title: d.title || '', slug: d.slug || '', department: d.department || '',
         location: d.location || '', type: d.type || 'full-time', experience: d.experience || '',
         description: d.description || '', responsibilities: d.responsibilities || [], requirements: d.requirements || [],
+        requiredSkills: d.requiredSkills || [], preferredSkills: d.preferredSkills || [],
         isActive: d.isActive ?? true, closingDate: d.closingDate ? d.closingDate.split('T')[0] : '',
       });
       setLastUpdatedAt(d.updatedAt);
@@ -218,6 +221,12 @@ const CareerEditor = ({ careerId, onBack, onSaved }) => {
               <StringListEditor label="Responsibilities" placeholder="e.g. Oversee daily site operations" items={form.responsibilities} onChange={v => set('responsibilities', v)} />
               <div className="border-t border-border-neutral pt-6">
                 <StringListEditor label="Requirements" placeholder="e.g. 5+ years experience in commercial builds" items={form.requirements} onChange={v => set('requirements', v)} />
+              </div>
+              <div className="border-t border-border-neutral pt-6">
+                <StringListEditor label="Required Skills (Weight: 70% in ATS Matcher)" placeholder="e.g. AutoCAD, RCC Design, STAAD Pro" items={form.requiredSkills || []} onChange={v => set('requiredSkills', v)} />
+              </div>
+              <div className="border-t border-border-neutral pt-6">
+                <StringListEditor label="Preferred Skills (Weight: 30% in ATS Matcher)" placeholder="e.g. Primavera P6, BIM, PEB Modelling" items={form.preferredSkills || []} onChange={v => set('preferredSkills', v)} />
               </div>
             </div>
           </section>
@@ -357,6 +366,11 @@ const ApplicationsView = ({ job, onBack }) => {
                           <span className="material-symbols-outlined text-[14px]">description</span> View Resume
                         </a>
                       ) : <span className="text-xs text-soft-grey italic">No Resume</span>}
+                      {app.supportingDocUrl && (
+                        <a href={app.supportingDocUrl} target="_blank" rel="noreferrer" className="text-emerald-700 hover:underline text-xs font-bold font-display uppercase tracking-wider flex items-center gap-1" title="Additional Technical Work Portfolio / Structural Calculation Sheets">
+                          <span className="material-symbols-outlined text-[14px]">architecture</span> View Portfolio
+                        </a>
+                      )}
                       {app.coverLetter && (
                         <div className="relative group cursor-help text-xs text-soft-grey flex items-center gap-1">
                           <span className="material-symbols-outlined text-[14px]">notes</span> Cover Letter

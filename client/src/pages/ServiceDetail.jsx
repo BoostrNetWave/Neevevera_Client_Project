@@ -196,14 +196,37 @@ const ServiceDetail = () => {
           </span>
         </div>
 
-        {/* Title + description - full width, no CTA button here */}
-        <div className="mb-10">
-          <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight leading-tight">
-            {service.title}
-          </h1>
-          <p className="text-base text-[#444440] mt-4 leading-relaxed max-w-2xl">
-            {service.description || service.shortDescription}
-          </p>
+        {/* Title + description with top-right Enquire CTA */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div className="max-w-3xl">
+            <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight leading-tight">
+              {service.title}
+            </h1>
+            <p className="text-base text-[#444440] mt-4 leading-relaxed max-w-2xl">
+              {service.description || service.shortDescription}
+            </p>
+          </div>
+
+          {/* Top-Right Enquire Action */}
+          <div className="shrink-0 flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-2">
+            <Link
+              to={`/contact?service=${encodeURIComponent(service.slug)}`}
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#07558F] hover:bg-[#054373] text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs"
+            >
+              <span>Enquire This Service</span>
+              <FiArrowRight size={14} />
+            </Link>
+            <Link
+              to="/estimate"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#07558F] hover:text-[#111822] transition mt-0.5"
+            >
+              <span>Need a cost estimate? Explore DSR rates</span>
+              <FiArrowRight size={12} />
+            </Link>
+            <span className="text-[11px] font-mono text-[#6B6B67]">
+              Director-led technical appraisal within 24h
+            </span>
+          </div>
         </div>
 
         {/* Hero Image */}
@@ -264,19 +287,28 @@ const ServiceDetail = () => {
 
             return (
               <div key={sIdx} className="mb-16">
-                {/* Section header - clean stacked layout matching design hierarchy */}
-                <div className="mb-8 max-w-3xl">
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#07558F]">
-                    Operational Scope
-                  </span>
-                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#111822] mt-1">
-                    {section.title}
-                  </h2>
-                  {section.description && (
-                    <p className="text-sm text-[#6B6B67] mt-2 leading-relaxed">
-                      {section.description}
-                    </p>
-                  )}
+                {/* Section header with top-right section enquire button */}
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-3 border-b border-[#EAE8E0]">
+                  <div className="max-w-2xl">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-[#07558F]">
+                      Operational Scope
+                    </span>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#111822] mt-1">
+                      {section.title}
+                    </h2>
+                    {section.description && (
+                      <p className="text-sm text-[#6B6B67] mt-2 leading-relaxed">
+                        {section.description}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    to={`/contact?service=${encodeURIComponent(service.slug)}&module=${encodeURIComponent(section.title)}`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#07558F] text-[#07558F] hover:bg-[#07558F] hover:text-white text-xs font-bold uppercase tracking-wider transition-colors shrink-0 whitespace-nowrap self-start sm:self-auto rounded-xs"
+                  >
+                    <span>Enquire {section.title}</span>
+                    <FiArrowRight size={12} />
+                  </Link>
                 </div>
 
                 {/* Sub-service cards */}
@@ -299,13 +331,23 @@ const ServiceDetail = () => {
                           <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#111822] text-white text-[10px] font-bold font-mono tracking-wider">
                             {String(sIdx + 1).padStart(2, '0')}.{String(subIdx + 1).padStart(2, '0')}
                           </div>
+                          {/* Top-Right Enquire Button on Card Image */}
+                          <Link
+                            to={`/contact?service=${encodeURIComponent(service.slug)}&module=${encodeURIComponent(sub.title)}`}
+                            className="absolute top-3 right-3 px-2.5 py-1 bg-white/95 hover:bg-white text-[#07558F] text-[10px] font-bold font-mono uppercase tracking-wider shadow-sm transition-all flex items-center gap-1 border border-[#D8D8D2] rounded-xs"
+                          >
+                            <span>Enquire</span>
+                            <FiArrowRight size={10} />
+                          </Link>
                         </div>
                       )}
 
                       <div className="flex flex-col flex-1 p-5">
-                        <h3 className="font-display text-base font-bold text-[#111822] group-hover:text-[#07558F] transition-colors mb-2 leading-snug">
-                          {sub.title}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-display text-base font-bold text-[#111822] group-hover:text-[#07558F] transition-colors leading-snug">
+                            {sub.title}
+                          </h3>
+                        </div>
                         {sub.description && (
                           <p className="text-xs text-[#444440] leading-relaxed flex-1 mb-4">
                             {sub.description}
@@ -313,10 +355,10 @@ const ServiceDetail = () => {
                         )}
                         <Link
                           to={`/contact?service=${encodeURIComponent(service.slug)}&module=${encodeURIComponent(sub.title)}`}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#07558F] hover:text-[#054373] transition-colors mt-auto"
+                          className="inline-flex items-center justify-between w-full pt-3 border-t border-[#EAE8E0] text-xs font-bold uppercase tracking-wider text-[#07558F] hover:text-[#054373] transition-colors mt-auto group/btn"
                         >
-                          Enquire
-                          <FiArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                          <span>Enquire Sub-Service</span>
+                          <FiArrowRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
                         </Link>
                       </div>
                     </div>
@@ -410,6 +452,25 @@ const ServiceDetail = () => {
         </div>
       </section>
 
+      {/* ── Contextual Estimate Callout ── */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 pb-16">
+        <div className="p-6 bg-white border border-[#D8D8D2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#07558F] font-mono">DSR RATE LIBRARY</span>
+            <h4 className="font-display text-base font-bold text-[#111822] mt-0.5">Indicative Cost Estimation</h4>
+            <p className="text-xs text-[#6B6B67] mt-1">
+              Need preliminary budgeting? Search government and standard schedule rates for construction and civil items.
+            </p>
+          </div>
+          <Link
+            to="/estimate"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-[#07558F] text-[#07558F] hover:bg-[#07558F] hover:text-white text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
+          >
+            <span>Explore DSR Rates</span>
+            <FiArrowRight size={14} />
+          </Link>
+        </div>
+      </section>
 
     </div>
   )

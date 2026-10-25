@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "about": "ଆମ ବିଷୟରେ",
+    "services": "ସେବାସମୂହ",
+    "projects": "ପ୍ରକଳ୍ପସମୂହ",
+    "more": "ଅଧିକ",
+    "contact": "ଯୋଗାଯୋଗ",
+    "startProject": "ପ୍ରୋଜେକ୍ଟ ଆରମ୍ଭ କରନ୍ତୁ",
+    "directoryOverview": "ଡିରେକ୍ଟୋରୀ ସମୀକ୍ଷା",
+    "capabilities": "ଦକ୍ଷତା",
+    "capabilitiesDesc": "ସିଭିଲ୍ ଏବଂ ସାମୁଦ୍ରିକ କାର୍ଯ୍ୟ",
+    "gallery": "ଗ୍ୟାଲେରୀ",
+    "galleryDesc": "ସାଇଟ୍ ଫଟୋଗ୍ରାଫି ଏବଂ ଡ୍ରୋନ୍",
+    "team": "ଟିମ୍",
+    "teamDesc": "ନିର୍ଦ୍ଦେଶକ ଏବଂ ବୈଷୟିକ କର୍ମଚାରୀ",
+    "careers": "କ୍ୟାରିୟର",
+    "careersDesc": "ଓଡ଼ିଶା ଏବଂ ପୋର୍ଟ ବ୍ଲେୟାରରେ ନିଯୁକ୍ତି",
+    "vendors": "ଭେଣ୍ଡର",
+    "vendorsDesc": "କ୍ରୟ ପୋର୍ଟାଲ୍",
+    "insights": "ଇନସାଇଟ୍",
+    "insightsDesc": "ପ୍ରବନ୍ଧ ଏବଂ ବୈଷୟିକ ତଥ୍ୟ",
+    "searchPlaceholder": "ସିଭିଲ୍ ସେବା, ପ୍ରକଳ୍ପ କିମ୍ବା DSR ଆଇଟମ୍ ଖୋଜନ୍ତୁ...",
+    "search": "ଖୋଜନ୍ତୁ",
+    "searchPortal": "ପୋର୍ଟାଲ୍ ଖୋଜନ୍ତୁ",
+    "estimateProjectCost": "ପ୍ରକଳ୍ପ ଖର୍ଚ୍ଚ ଆକଳନ",
+    "moreDestinations": "ଅଧିକ (୬ ଟି ବିଭାଗ)"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिन्दी (Hindi)",
+    "or": "ଓଡ଼ିଆ (Odia)",
+    "bn": "বাংলা (Bengali)"
+  }
+}

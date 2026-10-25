@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const careerSchema = new mongoose.Schema(
   {
@@ -11,16 +11,29 @@ const careerSchema = new mongoose.Schema(
     description:      { type: String, required: true },
     responsibilities: [String],
     requirements:     [String],
+    requiredSkills:   [String],
+    preferredSkills:  [String],
     isActive:         { type: Boolean, default: true },
     closingDate:      Date,
     applications: [{
-      name:        String,
-      email:       String,
-      phone:       String,
-      resumeUrl:   String,
-      coverLetter: String,
-      appliedAt:   { type: Date, default: Date.now },
-      status:      { type: String, enum: ['received', 'reviewed', 'shortlisted', 'rejected'], default: 'received' },
+      name:             String,
+      email:            String,
+      phone:            String,
+      resumeUrl:        String,
+      supportingDocUrl: String,
+      coverLetter:      String,
+      appliedAt:        { type: Date, default: Date.now },
+      status:           { type: String, enum: ['received', 'reviewed', 'shortlisted', 'rejected'], default: 'received' },
+      evaluation: {
+        overallScore:     Number,
+        requiredScore:    Number,
+        preferredScore:   Number,
+        matchedRequired:  [String],
+        missingRequired:  [String],
+        matchedPreferred: [String],
+        missingPreferred: [String],
+        evaluatedAt:      Date,
+      },
     }],
 
     // Phase 2 additions

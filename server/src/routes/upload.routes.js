@@ -261,6 +261,30 @@ publicRouter.post(
   })
 );
 
+// POST /api/public-upload/supporting-document — job applicants uploading technical portfolios / structural calculation sheets
+publicRouter.post(
+  '/supporting-document',
+  publicUploadLimiter,
+  multerUpload.single('file'),
+  validateUpload('supportingDoc'),
+  asyncHandler(async (req, res) => {
+    try {
+      const result = await uploadToCloudinary(req.file.buffer, 'supportingDoc', req.file.originalname);
+      await persistMediaAsset({
+        result,
+        context:      'supportingDoc',
+        originalname: req.file.originalname,
+        mimeType:     req.detectedMimeType,
+        uploadedBy:   null, // anonymous
+      });
+      return res.status(201).json({ success: true, url: result.secure_url });
+    } catch (err) {
+      console.error('Public supporting-document upload failed:', err);
+      return res.status(500).json({ error: 'Upload failed. Please try again.' });
+    }
+  })
+);
+
 // POST /api/public-upload/vendor-document — vendors uploading capability statements
 publicRouter.post(
   '/vendor-document',

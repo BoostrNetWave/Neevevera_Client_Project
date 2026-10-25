@@ -9,6 +9,7 @@ import Testimonial from '../models/Testimonial.js';
 import GalleryItem from '../models/GalleryItem.js';
 import HomeContent from '../models/HomeContent.js';
 import CompanyInfo from '../models/CompanyInfo.js';
+import Career from '../models/Career.js';
 
 const MODELS = {
   Service,
@@ -19,6 +20,7 @@ const MODELS = {
   GalleryItem,
   HomeContent,
   CompanyInfo,
+  Career,
 };
 
 /**

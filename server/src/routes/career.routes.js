@@ -41,6 +41,20 @@ router.patch(
   asyncHandler(careerController.updateApplicationStatus)
 );
 
+router.post(
+  '/applications/:appId/evaluate',
+  protect,
+  requireRole(...ADMIN_ROLES),
+  asyncHandler(careerController.evaluateApplication)
+);
+
+router.post(
+  '/evaluate-text',
+  protect,
+  requireRole(...ADMIN_ROLES),
+  asyncHandler(careerController.evaluateTextDirect)
+);
+
 // ── Admin routes — job management ─────────────────────────────
 router.get('/admin/list', protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareersAdmin));
 router.get('/admin/:id',  protect, requireRole(...ADMIN_ROLES), asyncHandler(careerController.getCareerById));
@@ -69,6 +83,13 @@ router.patch(
   protect,
   requireRole('admin', 'superadmin'),
   asyncHandler(careerController.updateApplicationStatus)
+);
+
+router.post(
+  '/:slug/applications/:appId/evaluate',
+  protect,
+  requireRole(...ADMIN_ROLES),
+  asyncHandler(careerController.evaluateApplication)
 );
 
 export default router;

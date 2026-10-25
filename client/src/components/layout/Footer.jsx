@@ -77,6 +77,17 @@ const Footer = () => {
               <li><Link className="hover:text-brand-blue transition-colors" to="/insights">Insights &amp; Notes</Link></li>
               <li><Link className="hover:text-brand-blue transition-colors" to="/contact">Contact Us</Link></li>
             </ul>
+            <div className="pt-2 border-t border-border-neutral">
+              <span className="text-[10px] font-bold text-graphite uppercase tracking-wider block mb-1">
+                Plan Your Project
+              </span>
+              <Link
+                to="/estimate"
+                className="text-xs font-bold text-brand-blue hover:text-brand-blue-hover transition-colors flex items-center gap-1"
+              >
+                <span>Estimate Project Cost →</span>
+              </Link>
+            </div>
           </div>
 
           {/* Operational Commands */}

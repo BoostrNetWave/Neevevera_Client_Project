@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { FiArrowRight } from 'react-icons/fi'
 import { services as mockServices } from '../data/mockData'
+import PinCoverageChecker from '../components/PinCoverageChecker'
 import axios from 'axios'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
@@ -60,17 +61,38 @@ const Services = () => {
   return (
     <div className="w-full bg-[#FAF9F6] text-[#171717]">
       {/* ── Header ── */}
-      <section className="border-b border-[#D8D8D2] pt-10 pb-14 bg-gradient-to-b from-[#F2EFE9]/70 to-[#FAF9F6]">
+      <section className="border-b border-[#D8D8D2] pt-10 pb-12 bg-gradient-to-b from-[#F2EFE9]/70 to-[#FAF9F6]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="text-[11px] font-bold tracking-widest uppercase text-[#07558F] mb-2">
-            02 // OUR SERVICES
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-3">
+            <div>
+              <div className="text-[11px] font-bold tracking-widest uppercase text-[#07558F] mb-2 font-mono">
+                ■ CORE PRACTICE AREAS &amp; TECHNICAL DIVISIONS
+              </div>
+              <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
+                Our Engineering Verticals
+              </h1>
+            </div>
+            <div className="text-left md:text-right pb-1">
+              <Link
+                to="/estimate"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#07558F] hover:text-[#111822] transition tracking-tight"
+              >
+                <span>Estimate project cost</span>
+                <FiArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="text-[11px] text-[#6B7280] font-mono mt-0.5">
+                Build an indicative estimate using DSR items
+              </div>
+            </div>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
-            Engineering &amp; Construction Verticals
-          </h1>
-          <p className="text-base sm:text-lg text-[#444440] mt-3 max-w-3xl leading-relaxed font-light">
-            Six integrated service disciplines — from full structural construction and specialist maintenance, to interior fit-outs and project management — all under one expert team.
+          <p className="text-sm sm:text-base text-[#444440] max-w-3xl leading-relaxed font-light mb-7">
+            From initial geotechnical feasibility and structural modeling to heavy cast-in-situ execution, we deliver end-to-end statutory civil engineering solutions governed by stringent Indian Standard codes.
           </p>
+
+          {/* ── PIN Code Coverage Checker Component ── */}
+          <div className="mt-2">
+            <PinCoverageChecker />
+          </div>
         </div>
       </section>
 
