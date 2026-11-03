@@ -11,12 +11,12 @@ const FALLBACK_IMAGE =
   'https://images.pexels.com/photos/1078884/pexels-photo-1078884.jpeg?auto=compress&cs=tinysrgb&w=1200'
 
 const CATEGORIES = [
-  { key: 'ALL',               label: '01 // All Articles' },
-  { key: 'Geotechnical',      label: '02 // Geotechnical & Foundation' },
-  { key: 'Structural',        label: '03 // Structural Analysis' },
-  { key: 'Materials',         label: '04 // Materials & Mix Design' },
-  { key: 'Coastal',           label: '05 // Coastal & Marine Works' },
-  { key: 'Industry Analysis', label: '06 // Industry & Statutory Codes' },
+  { key: 'ALL',               label: 'All Articles' },
+  { key: 'Geotechnical',      label: 'Geotechnical & Foundation' },
+  { key: 'Structural',        label: 'Structural Analysis' },
+  { key: 'Materials',         label: 'Materials & Mix Design' },
+  { key: 'Coastal',           label: 'Coastal & Marine Works' },
+  { key: 'Industry Analysis', label: 'Industry & Statutory Codes' },
 ]
 
 // Maps the admin panel's category values to this page's filter keys.
@@ -32,12 +32,12 @@ const CATEGORY_MAP = {
 
 const externalNews = [
   {
-    source: 'PUBLIC CIRCULAR // MoRTH',
+    source: 'PUBLIC CIRCULAR • MoRTH',
     title: 'Ministry of Road Transport & Highways Releases 5th Revision of Bridge Construction Specifications',
     desc: 'Updated mandates on high-performance concrete durability indicators, pre-stressing tendon corrosion mitigation, and mandatory elastomeric bearing testing.',
   },
   {
-    source: 'TECHNICAL DRAFT // BIS IS-1893',
+    source: 'TECHNICAL DRAFT • BIS IS-1893',
     title: 'Bureau of Indian Standards Updates Seismic Hazard Map Draft for Eastern Seaboard',
     desc: 'Proposed micro-zonation adjustments impacting foundation shear modulus standards for coastal structures along the Odisha and Andhra coastlines.',
   },
@@ -142,7 +142,7 @@ const Insights = () => {
             <div className="hidden sm:flex items-center gap-4 text-[#6B6B67]">
               <span className="flex items-center gap-1.5 text-[#07558F]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#07558F] animate-pulse" />
-                VOLUME VI // ISSUE 01-2025
+                VOLUME VI • ISSUE 2025
               </span>
               <span className="hidden md:inline">ISSN: 2710-8910</span>
             </div>
@@ -162,6 +162,13 @@ const Insights = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/research"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#07558F] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#054373] transition-colors rounded-sm shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[16px]">science</span>
+                R&amp;D Research Portal
+              </Link>
               <a href="#newsletter-digest" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111822] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#07558F] transition-colors rounded-sm shadow-sm">
                 <FiSend size={14} />Subscribe to Digest
               </a>
@@ -387,6 +394,35 @@ const Insights = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COLLABORATIVE RESEARCH & R&D BANNER ── */}
+      <section className="py-12 border-b border-[#D8D8D2] bg-gradient-to-r from-[#111822] via-[#1a2332] to-[#07558F] text-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-blue-300">
+                <span className="material-symbols-outlined text-[16px]">science</span>
+                Academic &amp; Field Research Initiative
+              </div>
+              <h2 className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight text-white">
+                Collaborative Civil Research &amp; R&amp;D Directory
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                Neevevera partners with academic institutions, Ph.D. scholars, and geotechnical researchers for coastal durability studies, novel RCC mix testing, and IS-code standardizations. Join our research network or explore active contributors.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Link
+                to="/research"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#07558F] hover:bg-[#054373] text-white text-xs font-bold uppercase tracking-wider transition-colors rounded-sm shadow-md border border-white/20"
+              >
+                <span>Explore Research Portal &amp; Submit Proposal</span>
+                <FiArrowRight size={14} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

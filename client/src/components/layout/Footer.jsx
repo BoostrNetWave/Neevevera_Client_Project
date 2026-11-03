@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useFormSubmit } from '../../hooks/useFormSubmit'
 import { subscribeNewsletter } from '../../services/newsletter.api'
 
 const Footer = () => {
+  const { t } = useTranslation('common')
   const { submit: subscribeFn, status: subStatus } = useFormSubmit(subscribeNewsletter)
   const [email, setEmail] = useState('')
   const [showCredits, setShowCredits] = useState(false)
@@ -39,7 +41,7 @@ const Footer = () => {
               />
             </Link>
             <p className="text-xs text-soft-grey leading-relaxed">
-              Multi-disciplinary civil engineering and infrastructure enterprise. Executing high-permanence structural assets across Eastern India and Island Territories.
+              {t('footer.tagline')}
             </p>
             <div className="space-y-1 text-xs text-soft-grey">
               <div>
@@ -63,19 +65,20 @@ const Footer = () => {
           {/* Navigation Links */}
           <div className="lg:col-span-2 space-y-3">
             <div className="text-xs font-bold text-graphite uppercase border-b border-border-neutral pb-1">
-              Navigation
+              {t('footer.quickLinks')}
             </div>
             <ul className="space-y-2 text-xs text-soft-grey">
-              <li><Link className="hover:text-brand-blue transition-colors" to="/about">About Us</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/services">Services</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/projects">Project Portfolio</Link></li>
-              <li><a className="hover:text-brand-blue transition-colors" href="/#capabilities">Capabilities</a></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/gallery">Field Gallery</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/team">Leadership Team</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/careers">Careers</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/vendors">Vendor Enrolment</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/insights">Insights &amp; Notes</Link></li>
-              <li><Link className="hover:text-brand-blue transition-colors" to="/contact">Contact Us</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/about">{t('nav.about')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/services">{t('nav.services')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/projects">{t('nav.projects')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/services">{t('nav.capabilities')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/gallery">{t('nav.gallery')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/team">{t('nav.team')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/careers">{t('nav.careers')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/vendors">{t('nav.vendors')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/partners">Marketing Partners</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/insights">{t('nav.insights')}</Link></li>
+              <li><Link className="hover:text-brand-blue transition-colors" to="/contact">{t('nav.contact')}</Link></li>
             </ul>
             <div className="pt-2 border-t border-border-neutral">
               <span className="text-[10px] font-bold text-graphite uppercase tracking-wider block mb-1">
@@ -85,7 +88,13 @@ const Footer = () => {
                 to="/estimate"
                 className="text-xs font-bold text-brand-blue hover:text-brand-blue-hover transition-colors flex items-center gap-1"
               >
-                <span>Estimate Project Cost →</span>
+                <span>{t('nav.estimateProjectCost')} →</span>
+              </Link>
+              <Link
+                to="/book-inspection"
+                className="text-xs font-bold text-brand-blue hover:text-brand-blue-hover transition-colors flex items-center gap-1 mt-1.5"
+              >
+                <span>{t('bookInspection.title')} →</span>
               </Link>
             </div>
           </div>
@@ -93,23 +102,23 @@ const Footer = () => {
           {/* Operational Commands */}
           <div className="lg:col-span-3 space-y-3">
             <div className="text-xs font-bold text-graphite uppercase border-b border-border-neutral pb-1">
-              Operational Commands
+              {t('footer.regionalHubs')}
             </div>
             <div className="space-y-3 text-xs">
               <div className="space-y-0.5">
-                <span className="font-semibold text-brand-blue uppercase">Odisha HQ</span>
-                <p className="text-soft-grey leading-tight">3rd Floor, Radianz Complex, Nuagan, Cuttack – 754001</p>
+                <span className="font-semibold text-brand-blue uppercase">{t('footer.odishaHq')}</span>
+                <p className="text-soft-grey leading-tight">Sector 9, CDA Industrial Estate, Cuttack – 753014</p>
                 <p className="text-graphite font-medium">Ph: +91 8596911655</p>
               </div>
               <div className="space-y-0.5">
-                <span className="font-semibold text-brand-green uppercase">Andaman Hub</span>
-                <p className="text-soft-grey leading-tight">75 JN Road, Haddo, Port Blair – 744102</p>
-                <p className="text-graphite font-medium">Ph: 03192-241890</p>
+                <span className="font-semibold text-brand-green uppercase">{t('footer.andamanCell')}</span>
+                <p className="text-soft-grey leading-tight">Haddo Maritime Corridor, Port Blair – 744102</p>
+                <p className="text-graphite font-medium">Ph: +91 8596911656</p>
               </div>
               <div className="space-y-0.5">
-                <span className="font-semibold text-brand-gold uppercase">Kolkata Office</span>
-                <p className="text-soft-grey leading-tight">31 Giri Babu Lane, 1st Floor, Kolkata – 700012</p>
-                <p className="text-graphite font-medium">Ph: 033-22252605</p>
+                <span className="font-semibold text-brand-gold uppercase">{t('footer.kolkataCell')}</span>
+                <p className="text-soft-grey leading-tight">Sector V, Salt Lake City, Kolkata – 700091</p>
+                <p className="text-graphite font-medium">Ph: +91 33 2955 1040</p>
               </div>
             </div>
           </div>
@@ -117,14 +126,14 @@ const Footer = () => {
           {/* Technical Updates / Subscription */}
           <div className="lg:col-span-3 space-y-3">
             <div className="text-xs font-bold text-graphite uppercase border-b border-border-neutral pb-1">
-              Technical Updates
+              {t('footer.newsletterTitle')}
             </div>
             <p className="text-xs text-soft-grey leading-relaxed">
-              Receive technical field notes and structural engineering briefs published by our senior design panel.
+              {t('footer.newsletterDesc')}
             </p>
             {subStatus === 'success' ? (
               <div className="p-2.5 bg-green-50 border border-green-200 text-brand-green text-xs rounded-sm">
-                ✓ Thank you for subscribing to field notes.
+                ✓ {t('footer.subscribed')}
               </div>
             ) : (
               <form className="space-y-2" onSubmit={handleSubscribe}>
@@ -142,7 +151,7 @@ const Footer = () => {
                   type="submit"
                   disabled={subStatus === 'loading'}
                 >
-                  {subStatus === 'loading' ? 'Subscribing...' : 'Subscribe to Field Notes'}
+                  {subStatus === 'loading' ? t('common.loading') : t('footer.subscribe')}
                 </button>
               </form>
             )}
@@ -151,9 +160,9 @@ const Footer = () => {
 
         {/* Bottom Legal bar */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-soft-grey">
-          <div>© Neevevera Private Limited. All rights reserved. CIN Certified Infrastructure Entity.</div>
+          <div>© Neevevera Private Limited. {t('footer.rights')}</div>
           <div className="flex items-center gap-4 flex-wrap">
-            <span>IS 456 • IS 800 • IRC Standards</span>
+            <span>{t('footer.standards')}</span>
             <span className="text-border-neutral">•</span>
             <button
               type="button"
@@ -163,9 +172,13 @@ const Footer = () => {
               Credits
             </button>
             <span className="text-border-neutral">•</span>
-            <Link className="hover:text-graphite transition-colors" to="/contact">Privacy Policy</Link>
+            <Link className="hover:text-graphite transition-colors" to="/privacy">Privacy Policy</Link>
             <span className="text-border-neutral">•</span>
-            <Link className="hover:text-graphite transition-colors" to="/contact">Terms of Tender</Link>
+            <Link className="hover:text-graphite transition-colors" to="/terms">Terms of Service</Link>
+            <span className="text-border-neutral">•</span>
+            <Link className="hover:text-graphite transition-colors" to="/refund-policy">Refund Policy</Link>
+            <span className="text-border-neutral">•</span>
+            <Link className="hover:text-graphite transition-colors" to="/partner-terms">Partner Terms</Link>
           </div>
         </div>
       </div>

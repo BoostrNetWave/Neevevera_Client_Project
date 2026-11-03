@@ -81,7 +81,19 @@ const testimonials = [
 const Vendors = () => {
   const { submit, status, errorMsg, reset } = useFormSubmit(registerVendor)
   const [formData, setFormData] = useState({
-    companyName: '', gstin: '', pan: '', tradeType: '', region: '', contactPerson: '', phone: '', email: ''
+    applicantType: 'company',
+    companyName: '',
+    gstin: '',
+    pan: '',
+    tradeType: '',
+    specialization: 'Civil Site Engineer',
+    experienceYears: '',
+    qualification: '',
+    dailyRate: '',
+    region: 'Odisha Corridor (Primary)',
+    contactPerson: '',
+    phone: '',
+    email: '',
   })
 
   const handleSubmit = async (e) => {
@@ -104,21 +116,28 @@ const Vendors = () => {
       'Pan-India / Multi-Region': 'pan-india'
     }
 
+    const isFreelancer = formData.applicantType === 'freelancer';
     const payload = {
-      companyName: formData.companyName,
+      applicantType: formData.applicantType,
+      companyName: isFreelancer ? (formData.contactPerson + ' (Independent)') : formData.companyName,
       contactPerson: formData.contactPerson,
       email: formData.email,
       phone: formData.phone,
-      gstNumber: formData.gstin,
+      gstNumber: formData.gstin || (isFreelancer ? 'NOT_APPLICABLE' : ''),
       panNumber: formData.pan,
-      tradeCategory: tradeMap[formData.tradeType] || 'other',
-      tradeSubCategory: formData.tradeType,
+      tradeCategory: isFreelancer ? 'civil-construction' : (tradeMap[formData.tradeType] || 'other'),
+      tradeSubCategory: isFreelancer ? formData.specialization : formData.tradeType,
+      specialization: formData.specialization,
+      experienceYears: Number(formData.experienceYears) || 0,
+      qualification: formData.qualification,
+      dailyRate: Number(formData.dailyRate) || 0,
       regionsServed: regionMap[formData.region] ? [regionMap[formData.region]] : ['other'],
-      // Defaults for fields not present in the current UI design
       pinCode: 'N/A',
       city: 'N/A',
       state: 'N/A',
-      message: `Registered via portal. Trade: ${formData.tradeType}, Region: ${formData.region}`,
+      message: isFreelancer 
+        ? `Freelancer Registration: ${formData.specialization}, Exp: ${formData.experienceYears} yrs, Qual: ${formData.qualification}`
+        : `Registered via portal. Trade: ${formData.tradeType}, Region: ${formData.region}`,
     }
     
     await submit(payload)
@@ -361,9 +380,37 @@ const Vendors = () => {
                 </div>
               ) : (
                 <>
-                  <div className="border-b border-[#D8D8D2] pb-3 mb-5">
+                  <div className="border-b border-[#D8D8D2] pb-3 mb-4">
                     <span className="text-[11px] text-[#07558F] uppercase font-bold tracking-widest block mb-0.5">Empanelment Intake Dossier</span>
-                    <h3 className="font-display text-lg font-bold text-[#111822] uppercase">Stage 01 — Enterprise Registration</h3>
+                    <h3 className="font-display text-lg font-bold text-[#111822] uppercase">
+                      {formData.applicantType === 'freelancer' ? 'Professional Registration — Civil Consultant / Freelancer' : 'Stage 01 — Enterprise / Vendor Registration'}
+                    </h3>
+                  </div>
+
+                  {/* Applicant Type Toggle */}
+                  <div className="flex items-center gap-1.5 mb-5 p-1 bg-[#F4F2EC] border border-[#D8D8D2] rounded-xs">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, applicantType: 'company' })}
+                      className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                        formData.applicantType === 'company'
+                          ? 'bg-[#07558F] text-white shadow-xs'
+                          : 'text-[#6B6B67] hover:text-[#111822]'
+                      }`}
+                    >
+                      Corporate Subcontractor / Supplier
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, applicantType: 'freelancer' })}
+                      className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                        formData.applicantType === 'freelancer'
+                          ? 'bg-[#07558F] text-white shadow-xs'
+                          : 'text-[#6B6B67] hover:text-[#111822]'
+                      }`}
+                    >
+                      Independent Engineer / Freelance Specialist
+                    </button>
                   </div>
                   <form className="space-y-3.5" onSubmit={handleSubmit}>
                     {status === 'error' && (
@@ -372,16 +419,36 @@ const Vendors = () => {
                         <span>{errorMsg}</span>
                       </div>
                     )}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">Company / Firm Name *</label>
-                        <input required type="text" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} disabled={status === 'loading'} placeholder="e.g. Apex Civil Contractors Pvt. Ltd." className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]" />
+                    {formData.applicantType === 'company' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">Company / Firm Name *</label>
+                          <input required type="text" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} disabled={status === 'loading'} placeholder="e.g. Apex Civil Contractors Pvt. Ltd." className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">GSTIN *</label>
+                          <input required type="text" value={formData.gstin} onChange={e => setFormData({...formData, gstin: e.target.value})} disabled={status === 'loading'} placeholder="e.g. 21AADCB2230M1ZP" className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]" />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">GSTIN *</label>
-                        <input required type="text" value={formData.gstin} onChange={e => setFormData({...formData, gstin: e.target.value})} disabled={status === 'loading'} placeholder="e.g. 21AADCB2230M1ZP" className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]" />
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">Engineering Specialization *</label>
+                          <select required value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})} disabled={status === 'loading'} className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]">
+                            <option value="Civil Site Engineer">Civil Site Engineer / Supervisor</option>
+                            <option value="Structural Draughtsman">Structural Draughtsman (BIM/AutoCAD)</option>
+                            <option value="Land Surveyor">Land / Geodetic Surveyor</option>
+                            <option value="QC Inspector">Quality Control / Concrete Testing Inspector</option>
+                            <option value="Quantity Surveyor">Quantity Surveyor / DSR Cost Estimator</option>
+                            <option value="Safety Officer">Safety & EHS Officer</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">Highest Engineering Qualification *</label>
+                          <input required type="text" value={formData.qualification} onChange={e => setFormData({...formData, qualification: e.target.value})} disabled={status === 'loading'} placeholder="e.g. B.Tech Civil / Diploma Civil / Chartered Engineer" className="w-full bg-[#FAF9F6] border border-[#D8D8D2] px-3 py-2 text-[#111822] text-xs focus:outline-none focus:border-[#07558F]" />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div className="space-y-1">
                         <label className="text-[10px] text-[#111822] uppercase font-bold tracking-wide block">PAN *</label>
@@ -430,7 +497,9 @@ const Vendors = () => {
                       {status === 'loading' ? 'Submitting Registration...' : 'Register for Empanelment →'}
                     </button>
                     <p className="text-[10px] text-[#6B6B67] text-center leading-relaxed">
-                      By submitting, you consent to statutory KYC verification per Neevevera's vendor compliance charter. Reference ID will be issued within 48 hours.
+                      By submitting, you consent to statutory KYC verification per Neevevera's{' '}
+                      <Link to="/terms" className="text-[#07558F] underline hover:text-[#054373]">Terms</Link> and{' '}
+                      <Link to="/privacy" className="text-[#07558F] underline hover:text-[#054373]">Privacy Policy</Link>. Reference ID will be issued within 48 hours.
                     </p>
                   </form>
                 </>

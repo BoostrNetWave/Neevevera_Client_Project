@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 import { FiPhone, FiMail, FiMapPin, FiSend, FiCheckCircle, FiClock, FiShield, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { useFormSubmit } from '../hooks/useFormSubmit'
@@ -15,6 +16,7 @@ const SLUG_TO_LABEL = {
 }
 
 const Contact = () => {
+  const { t } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const serviceParam = (searchParams.get('service') || '').trim()
   const moduleParam = (searchParams.get('module') || '').trim()
@@ -53,6 +55,11 @@ const Contact = () => {
     await submit(form)
   }
 
+  // Detect if this looks like a construction/site-related enquiry
+  const isSiteRelated = ['Construction', 'Building Repair and Maintenance', 'Design and Planning'].some(
+    c => form.serviceCategory?.includes(c)
+  ) || form.projectScope?.toLowerCase().includes('site') || form.projectScope?.toLowerCase().includes('plot')
+
   return (
     <div className="w-full bg-[#FAF9F6] text-[#171717]">
       <Helmet>
@@ -68,10 +75,10 @@ const Contact = () => {
             17 // ENGAGEMENT DESK
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
-            Procurement &amp; Contact Directorate
+            {t('contact.heading')}
           </h1>
           <p className="text-sm sm:text-base text-[#444440] mt-3 max-w-2xl font-light">
-            Direct communication channels for government tender authorities, institutional clients, sub-contractors, and vendor registration across our three regional offices.
+            {t('contact.sub')}
           </p>
         </div>
       </section>
@@ -145,7 +152,7 @@ const Contact = () => {
           <div className="border border-[#D8D8D2] bg-white p-8 sm:p-10 shadow-sm">
             <div className="pb-6 border-b border-[#E5E3DC] mb-6">
               <h2 className="font-display text-2xl font-bold text-[#111822]">
-                Submit Tender Document, RFQ or General Inquiry
+                {t('contact.formTitle')}
               </h2>
                 <p className="text-xs text-[#6B6B67] font-medium mt-1">
                   Submissions are logged directly into our central estimating desk and acknowledged with a reference tracking ID.
@@ -185,20 +192,69 @@ const Contact = () => {
             )}
 
             {status === 'success' ? (
-              <div className="py-12 text-center bg-emerald-50 border border-emerald-200">
-                <FiCheckCircle className="mx-auto text-[#075638] mb-3" size={48} />
-                <h3 className="font-display text-2xl font-bold text-[#075638]">
-                  Inquiry Dispatched to Engineering Cell
-                </h3>
-                <p className="text-xs font-medium text-emerald-950 mt-2 max-w-md mx-auto">
-                  Our procurement officer will review your submission and contact you within 24 working hours.
-                </p>
-                <button
-                  onClick={reset}
-                  className="mt-6 px-6 py-2.5 bg-[#07558F] text-white text-xs font-medium font-bold uppercase"
-                >
-                  Send Another Inquiry
-                </button>
+              <div className="space-y-0">
+                {/* Success confirmation */}
+                <div className="py-10 text-center bg-emerald-50 border border-emerald-200">
+                  <FiCheckCircle className="mx-auto text-[#075638] mb-3" size={40} />
+                  <h3 className="font-display text-xl font-bold text-[#075638]">
+                    {t('contact.successTitle')}
+                  </h3>
+                  <p className="text-xs font-medium text-emerald-950 mt-2 max-w-md mx-auto">
+                    {t('contact.successDesc')}
+                  </p>
+                  <button
+                    onClick={reset}
+                    className="mt-5 px-5 py-2 bg-white border border-emerald-300 text-emerald-800 text-xs font-medium font-bold uppercase hover:bg-emerald-50 transition-colors"
+                  >
+                    Send Another Inquiry
+                  </button>
+                </div>
+
+                {/* Site Inspection Upsell CTA */}
+                <div className="border border-[#07558F]/20 bg-gradient-to-br from-[#EFF6FF] to-[#F0F9FF] p-6 sm:p-8">
+                  <div className="flex flex-col sm:flex-row items-start gap-5">
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-[#07558F] text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-xl">engineering</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[10px] font-bold tracking-widest uppercase text-[#07558F] mb-1">
+                        {t('contact.siteVisitUpsellTitle')}
+                      </div>
+                      <h4 className="font-display text-lg font-bold text-[#111822]">
+                        {t('contact.siteVisitUpsellHeading')}
+                      </h4>
+                      <p className="text-xs text-[#444440] mt-2 leading-relaxed max-w-lg">
+                        {t('contact.siteVisitUpsellDesc')}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-[#444440]">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#07558F]"></span>
+                          Structural safety assessment
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#07558F]"></span>
+                          Foundation &amp; soil analysis
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#07558F]"></span>
+                          Detailed engineering report
+                        </span>
+                      </div>
+                      <div className="mt-5 flex flex-wrap gap-3 items-center">
+                        <a
+                          href={`/book-inspection?name=${encodeURIComponent(form.name)}&phone=${encodeURIComponent(form.phone)}&email=${encodeURIComponent(form.email)}`}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#07558F] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#054373] transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-sm">calendar_month</span>
+                          {t('contact.bookInspection')}
+                        </a>
+                        <span className="text-[10px] text-[#6B6B67]">
+                          Token: ₹1,000 &bull; Credited against contract
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -342,6 +398,11 @@ const Contact = () => {
                     </>
                   )}
                 </button>
+                <p className="text-[10px] text-[#6B6B67] text-center leading-relaxed">
+                  By submitting this inquiry, you agree to our{' '}
+                  <Link to="/privacy" className="text-[#07558F] underline hover:text-[#054373]">Privacy Policy</Link> and{' '}
+                  <Link to="/terms" className="text-[#07558F] underline hover:text-[#054373]">Terms of Service</Link>.
+                </p>
               </form>
             )}
           </div>

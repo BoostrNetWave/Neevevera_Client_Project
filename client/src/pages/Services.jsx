@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiArrowRight } from 'react-icons/fi'
 import { services as mockServices } from '../data/mockData'
 import PinCoverageChecker from '../components/PinCoverageChecker'
@@ -17,6 +18,7 @@ const CATEGORY_LABELS = {
 }
 
 const Services = () => {
+  const { t } = useTranslation('common')
   const [liveServices, setLiveServices] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -69,7 +71,7 @@ const Services = () => {
                 ■ CORE PRACTICE AREAS &amp; TECHNICAL DIVISIONS
               </div>
               <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
-                Our Engineering Verticals
+                {t('services.heading')}
               </h1>
             </div>
             <div className="text-left md:text-right pb-1">
@@ -77,16 +79,15 @@ const Services = () => {
                 to="/estimate"
                 className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#07558F] hover:text-[#111822] transition tracking-tight"
               >
-                <span>Estimate project cost</span>
-                <FiArrowRight className="w-4 h-4" />
+                <span>{t('services.estimateCta')}</span>
               </Link>
               <div className="text-[11px] text-[#6B7280] font-mono mt-0.5">
-                Build an indicative estimate using DSR items
+                {t('services.estimateDesc')}
               </div>
             </div>
           </div>
           <p className="text-sm sm:text-base text-[#444440] max-w-3xl leading-relaxed font-light mb-7">
-            From initial geotechnical feasibility and structural modeling to heavy cast-in-situ execution, we deliver end-to-end statutory civil engineering solutions governed by stringent Indian Standard codes.
+            {t('services.sub')}
           </p>
 
           {/* ── PIN Code Coverage Checker Component ── */}
@@ -108,7 +109,6 @@ const Services = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {allServices.map((service, idx) => {
                 const subTags = getSubTags(service)
-                const displayNum = service.order ? String(service.order).padStart(2, '0') : String(idx + 1).padStart(2, '0')
                 const coverImage = service.image || '/images/client_hero.webp'
                 const slug = service.slug
                 const title = service.title
@@ -127,7 +127,7 @@ const Services = () => {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-sm text-white font-bold text-[10px] px-2.5 py-1 uppercase tracking-wider font-mono">
-                        {displayNum} // {CATEGORY_LABELS[service.category] || service.category}
+                        {CATEGORY_LABELS[service.category] || service.category}
                       </div>
                     </div>
 

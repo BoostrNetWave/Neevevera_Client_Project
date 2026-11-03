@@ -108,7 +108,7 @@ export const updateApplicationStatus = async (req, res) => {
     {
       $set: { 'applications.$.status': status },
     },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!job) {
@@ -225,7 +225,7 @@ export const updateCareer = async (req, res) => {
   const updated = await Career.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   ).select('-applications');
   res.json({ success: true, data: updated });
 };

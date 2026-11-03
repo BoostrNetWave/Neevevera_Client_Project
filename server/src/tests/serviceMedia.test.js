@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  * serviceMedia.test.js
  *
  * Verifies that MediaAsset.usageCount stays accurate through the full
@@ -44,7 +44,7 @@ async function simulateUpdate(serviceId, patch, userId) {
   const updated = await Service.findByIdAndUpdate(
     serviceId,
     { ...patch, updatedBy: userId },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
   const after = collectServiceImages(updated);
   for (const url of after)  if (!before.has(url)) await incrementMediaUsage(url);
@@ -104,7 +104,7 @@ afterAll(async () => {
 // collectServiceImages unit tests
 // ---------------------------------------------------------------------------
 
-describe("collectServiceImages — Set semantics", () => {
+describe("collectServiceImages â€” Set semantics", () => {
   it("deduplicates image appearing at top-level and in a sub-service", () => {
     const shared = "https://cdn.example.com/shared.jpg";
     const doc = {
@@ -129,7 +129,7 @@ describe("collectServiceImages — Set semantics", () => {
 // Test 1
 // ---------------------------------------------------------------------------
 
-describe("Test 1 — create with cover + 2 sub-service images (one duplicate)", () => {
+describe("Test 1 â€” create with cover + 2 sub-service images (one duplicate)", () => {
   it("counts each unique URL once per service", async () => {
     const cover = "https://cdn.example.com/cover.jpg";
     const sub1  = "https://cdn.example.com/sub1.jpg";
@@ -158,7 +158,7 @@ describe("Test 1 — create with cover + 2 sub-service images (one duplicate)", ()
 // Test 2
 // ---------------------------------------------------------------------------
 
-describe("Test 2 — removing a sub-service decrements only its image", () => {
+describe("Test 2 â€” removing a sub-service decrements only its image", () => {
   it("other images are unaffected", async () => {
     const cover = "https://cdn.example.com/cover2.jpg";
     const sub1  = "https://cdn.example.com/sub1-2.jpg";
@@ -194,7 +194,7 @@ describe("Test 2 — removing a sub-service decrements only its image", () => {
 // Test 3
 // ---------------------------------------------------------------------------
 
-describe("Test 3 — swapping a sub-service image", () => {
+describe("Test 3 â€” swapping a sub-service image", () => {
   it("old image goes to 0, new image goes to 1", async () => {
     const oldImg = "https://cdn.example.com/old.jpg";
     const newImg = "https://cdn.example.com/new.jpg";
@@ -220,10 +220,10 @@ describe("Test 3 — swapping a sub-service image", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 4 — the most important: no phantom increments on text-only saves
+// Test 4 â€” the most important: no phantom increments on text-only saves
 // ---------------------------------------------------------------------------
 
-describe("Test 4 — saving with no image changes leaves counts unchanged", () => {
+describe("Test 4 â€” saving with no image changes leaves counts unchanged", () => {
   it("a text-only patch does not alter usageCounts", async () => {
     const cover = "https://cdn.example.com/cover3.jpg";
     const sub   = "https://cdn.example.com/sub3.jpg";
@@ -256,7 +256,7 @@ describe("Test 4 — saving with no image changes leaves counts unchanged", () => 
 // Test 5
 // ---------------------------------------------------------------------------
 
-describe("Test 5 — deleting the service returns every image in the tree to 0", () => {
+describe("Test 5 â€” deleting the service returns every image in the tree to 0", () => {
   it("cover, gallery, and all sub-service images are decremented", async () => {
     const cover   = "https://cdn.example.com/del-cover.jpg";
     const gallery = "https://cdn.example.com/del-gal.jpg";
@@ -296,10 +296,10 @@ describe("Test 5 — deleting the service returns every image in the tree to 0", (
 });
 
 // ---------------------------------------------------------------------------
-// Test 6 — backfill is idempotent
+// Test 6 â€” backfill is idempotent
 // ---------------------------------------------------------------------------
 
-describe("Test 6 — backfill is idempotent (running twice does not double-count)", () => {
+describe("Test 6 â€” backfill is idempotent (running twice does not double-count)", () => {
   it("second run leaves usageCount at 1, not 2", async () => {
     const url = "https://cdn.example.com/backfill.jpg";
     await Service.create({ ...BASE, image: url });
@@ -328,10 +328,10 @@ describe("Test 6 — backfill is idempotent (running twice does not double-count)"
 });
 
 // ---------------------------------------------------------------------------
-// Test 7 — deactivate does not release images
+// Test 7 â€” deactivate does not release images
 // ---------------------------------------------------------------------------
 
-describe("Test 7 — deactivating does NOT release images", () => {
+describe("Test 7 â€” deactivating does NOT release images", () => {
   it("usageCount unchanged after isActive: false", async () => {
     const cover = "https://cdn.example.com/deact.jpg";
     await seedAsset(cover, userId);
@@ -346,3 +346,4 @@ describe("Test 7 — deactivating does NOT release images", () => {
     expect(await usageOf(cover)).toBe(1);
   });
 });
+

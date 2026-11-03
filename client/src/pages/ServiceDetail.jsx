@@ -59,42 +59,42 @@ const CATEGORY_METRICS = {
 // Four-stage process per category
 const EXECUTION_STAGES = {
   'construction': [
-    { code: '01 // SURVEY', title: 'Geotechnical Investigation', desc: 'Soil bearing tests, borehole logs, topographic survey, and subgrade assessment prior to foundation design.' },
-    { code: '02 // DESIGN', title: 'Structural Engineering', desc: 'STAAD Pro / ETABS modeling, ductile detailing per IS 13920, and statutory sanction drawings.' },
-    { code: '03 // EXECUTE', title: 'Turnkey Construction', desc: 'Piling, formwork, RMC pour with NABL cube testing, structural shell, MEP rough-in, and finishing.' },
-    { code: '04 // CERTIFY', title: 'Handover & Warranty', desc: 'Structural load certification, occupancy clearance, and multi-year warranty deed issuance.' },
+    { code: 'SURVEY', title: 'Geotechnical Investigation', desc: 'Soil bearing tests, borehole logs, topographic survey, and subgrade assessment prior to foundation design.' },
+    { code: 'DESIGN', title: 'Structural Engineering', desc: 'STAAD Pro / ETABS modeling, ductile detailing per IS 13920, and statutory sanction drawings.' },
+    { code: 'EXECUTE', title: 'Turnkey Construction', desc: 'Piling, formwork, RMC pour with NABL cube testing, structural shell, MEP rough-in, and finishing.' },
+    { code: 'CERTIFY', title: 'Handover & Warranty', desc: 'Structural load certification, occupancy clearance, and multi-year warranty deed issuance.' },
   ],
   'building-repair-maintenance': [
-    { code: '01 // AUDIT', title: 'Diagnostic Survey', desc: 'Rebound hammer, moisture profiling, ultrasonic pulse velocity, and crack pattern telemetry.' },
-    { code: '02 // SPECIFY', title: 'BOQ & Material Select', desc: 'Detailed itemized schedule adhering to CPWD specifications and ASTM chemical standards.' },
-    { code: '03 // EXECUTE', title: 'Calibrated Application', desc: 'Pressure grouting, micro-concreting, surface priming, and line laying under resident site engineers.' },
-    { code: '04 // VALIDATE', title: 'Sign-off & Warranty', desc: 'Core shear testing, ponding leak tests, thermal scans, and formal multi-year warranty deeds.' },
+    { code: 'AUDIT', title: 'Diagnostic Survey', desc: 'Rebound hammer, moisture profiling, ultrasonic pulse velocity, and crack pattern telemetry.' },
+    { code: 'SPECIFY', title: 'BOQ & Material Select', desc: 'Detailed itemized schedule adhering to CPWD specifications and ASTM chemical standards.' },
+    { code: 'EXECUTE', title: 'Calibrated Application', desc: 'Pressure grouting, micro-concreting, surface priming, and line laying under resident site engineers.' },
+    { code: 'VALIDATE', title: 'Sign-off & Warranty', desc: 'Core shear testing, ponding leak tests, thermal scans, and formal multi-year warranty deeds.' },
   ],
   'design-planning': [
-    { code: '01 // BRIEF', title: 'Client Programming', desc: 'Space requirements, regulatory constraints, site orientation, and functional zone mapping.' },
-    { code: '02 // CONCEPT', title: 'Schematic Design', desc: 'Architectural massing, structural grid, MEP routes, and preliminary BOQ estimate.' },
-    { code: '03 // DEVELOP', title: 'Detailed Drawings', desc: 'GFC structural details, sanction drawings, 3D renders, and clash-free BIM models.' },
-    { code: '04 // DELIVER', title: 'Tender Package', desc: 'Complete bid document set, specifications, BOQ, and contractor pre-qualification criteria.' },
+    { code: 'BRIEF', title: 'Client Programming', desc: 'Space requirements, regulatory constraints, site orientation, and functional zone mapping.' },
+    { code: 'CONCEPT', title: 'Schematic Design', desc: 'Architectural massing, structural grid, MEP routes, and preliminary BOQ estimate.' },
+    { code: 'DEVELOP', title: 'Detailed Drawings', desc: 'GFC structural details, sanction drawings, 3D renders, and clash-free BIM models.' },
+    { code: 'DELIVER', title: 'Tender Package', desc: 'Complete bid document set, specifications, BOQ, and contractor pre-qualification criteria.' },
   ],
   'interior-exterior-solutions': [
-    { code: '01 // CONCEPT', title: 'Design Brief', desc: 'Client mood board, spatial programming, material palette shortlisting, and budget framework.' },
-    { code: '02 // SPECIFY', title: 'Technical Drawing', desc: 'Interior layout GFCs, facade elevation drawings, and MEP coordination sheets.' },
-    { code: '03 // EXECUTE', title: 'Fit-Out Construction', desc: 'Ceilings, cladding, flooring, furniture installation, and MEP finish integration.' },
-    { code: '04 // HANDOVER', title: 'Snag & Commission', desc: 'Punch-list snag clearance, lighting commissioning, and turnkey handover with material warranty.' },
+    { code: 'CONCEPT', title: 'Design Brief', desc: 'Client mood board, spatial programming, material palette shortlisting, and budget framework.' },
+    { code: 'SPECIFY', title: 'Technical Drawing', desc: 'Interior layout GFCs, facade elevation drawings, and MEP coordination sheets.' },
+    { code: 'EXECUTE', title: 'Fit-Out Construction', desc: 'Ceilings, cladding, flooring, furniture installation, and MEP finish integration.' },
+    { code: 'HANDOVER', title: 'Snag & Commission', desc: 'Punch-list snag clearance, lighting commissioning, and turnkey handover with material warranty.' },
   ],
   'project-management-consultancy': [
-    { code: '01 // MOBILIZE', title: 'PMC Setup', desc: 'Site office establishment, documentation framework, contractor kick-off, and baseline schedule.' },
-    { code: '02 // CONTROL', title: 'Ongoing Monitoring', desc: 'Weekly progress reviews, BOQ billing verification, RFI management, and variance reporting.' },
-    { code: '03 // QA/QC', title: 'Quality Surveillance', desc: 'Third-party lab testing, non-conformance reports, and corrective action tracking.' },
-    { code: '04 // CLOSE', title: 'Completion & Audit', desc: 'Final bill reconciliation, punch-list, statutory clearance, and project closure report.' },
+    { code: 'MOBILIZE', title: 'PMC Setup', desc: 'Site office establishment, documentation framework, contractor kick-off, and baseline schedule.' },
+    { code: 'CONTROL', title: 'Ongoing Monitoring', desc: 'Weekly progress reviews, BOQ billing verification, RFI management, and variance reporting.' },
+    { code: 'QA/QC', title: 'Quality Surveillance', desc: 'Third-party lab testing, non-conformance reports, and corrective action tracking.' },
+    { code: 'CLOSE', title: 'Completion & Audit', desc: 'Final bill reconciliation, punch-list, statutory clearance, and project closure report.' },
   ],
 }
 
 const DEFAULT_STAGES = [
-  { code: '01 // ASSESS', title: 'Initial Assessment', desc: 'Site survey, requirements analysis, and feasibility study.' },
-  { code: '02 // PLAN', title: 'Planning & BOQ', desc: 'Detailed scope, bill of quantities, and project schedule.' },
-  { code: '03 // EXECUTE', title: 'Execution', desc: 'Supervised deployment with quality checkpoints at every stage.' },
-  { code: '04 // DELIVER', title: 'Handover', desc: 'Sign-off, documentation, and warranty issuance.' },
+  { code: 'ASSESS', title: 'Initial Assessment', desc: 'Site survey, requirements analysis, and feasibility study.' },
+  { code: 'PLAN', title: 'Planning & BOQ', desc: 'Detailed scope, bill of quantities, and project schedule.' },
+  { code: 'EXECUTE', title: 'Execution', desc: 'Supervised deployment with quality checkpoints at every stage.' },
+  { code: 'DELIVER', title: 'Handover', desc: 'Sign-off, documentation, and warranty issuance.' },
 ]
 
 const ServiceDetail = () => {
@@ -328,9 +328,6 @@ const ServiceDetail = () => {
                             alt={sub.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                          <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#111822] text-white text-[10px] font-bold font-mono tracking-wider">
-                            {String(sIdx + 1).padStart(2, '0')}.{String(subIdx + 1).padStart(2, '0')}
-                          </div>
                           {/* Top-Right Enquire Button on Card Image */}
                           <Link
                             to={`/contact?service=${encodeURIComponent(service.slug)}&module=${encodeURIComponent(sub.title)}`}

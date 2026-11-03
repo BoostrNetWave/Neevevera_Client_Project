@@ -2,7 +2,9 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import app from "./src/app.js";
 import { startOrphanCleanupJob } from "./src/jobs/orphanCleanup.js";
+import { startSlotHoldExpiryJob } from "./src/jobs/slotHoldExpiry.js";
 
+// Restart trigger: updated Razorpay keys in .env
 const PORT = process.env.PORT || 5000;
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -27,6 +29,7 @@ async function startServer() {
     
     // Start background jobs
     startOrphanCleanupJob();
+    startSlotHoldExpiryJob();
 
     app.listen(PORT, () => {
       console.log(`✅ Neevevera Server running on http://localhost:${PORT}`);

@@ -26,6 +26,7 @@
  */
 
 import express          from 'express';
+import helmet           from 'helmet';
 import cors             from 'cors';
 import cookieParser     from 'cookie-parser';
 import mongoose         from 'mongoose';
@@ -64,6 +65,14 @@ app.use(cors({
   credentials: true,          // required for HttpOnly cookie auth
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
+
+// ── Razorpay Webhook Raw Body Parser (MUST be before express.json) ──
+import { razorpayWebhookHandler } from './routes/razorpayWebhook.routes.js';
+app.post(
+  '/api/payments/razorpay/webhook',
+  express.raw({ type: '*/*' }),
+  razorpayWebhookHandler
+);
 
 // ── Body parsers & cookie parser ────────────────────────────
 app.use(express.json({ limit: '1mb' }));                // protect from JSON bombs
@@ -143,6 +152,11 @@ import searchRoutes       from './routes/search.routes.js';
 import galleryRoutes      from './routes/gallery.routes.js';
 import homeContentRoutes  from './routes/homeContent.routes.js';
 import serviceAreaRoutes from './routes/serviceArea.routes.js';
+import dsrRoutes         from './routes/dsr.routes.js';
+import siteInspectionRoutes from './routes/siteInspection.routes.js';
+import researcherRoutes     from './routes/researcher.routes.js';
+import parRoutes            from './routes/par.routes.js';
+import partnerRoutes        from './routes/partner.routes.js';
 
 // ── Mount routes ──────────────────────────────────────────────
 // Public read — global rate limit only
@@ -156,6 +170,11 @@ app.use('/api/company',      companyRoutes);
 app.use('/api/gallery',      galleryRoutes);
 app.use('/api/home',         homeContentRoutes);
 app.use('/api/search',       searchRoutes);
+app.use('/api/dsr',          dsrRoutes);
+app.use('/api/par',          parRoutes);
+app.use('/api/site-inspections', siteInspectionRoutes);
+app.use('/api/researchers',  researcherRoutes);
+app.use('/api/partners',     partnerRoutes);
 
 // Service Areas / PIN coverage (Feature Flagged)
 if (process.env.FEATURE_SERVICE_AREAS === 'true' || process.env.NODE_ENV === 'test') {

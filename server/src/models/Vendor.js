@@ -8,6 +8,19 @@ import mongoose from 'mongoose';
  */
 const vendorSchema = new mongoose.Schema(
   {
+    // ── Applicant Type (Corporate Vendor vs. Freelancer / Civil Consultant) ──
+    applicantType: {
+      type: String,
+      enum: ['company', 'freelancer'],
+      default: 'company',
+      index: true,
+    },
+    // ── Freelancer Specific Details ────────────────────────────
+    specialization: { type: String, trim: true },
+    experienceYears: { type: Number, min: 0 },
+    qualification: { type: String, trim: true },
+    dailyRate: { type: Number, min: 0 },
+
     // ── Contact ────────────────────────────────────────────────
     companyName:  { type: String, required: true, trim: true },
     contactPerson:{ type: String, required: true, trim: true },
@@ -81,5 +94,11 @@ const vendorSchema = new mongoose.Schema(
 // Index for fast admin-panel queries
 vendorSchema.index({ status: 1, tradeCategory: 1 });
 vendorSchema.index({ email: 1 }, { unique: true });
+
+vendorSchema.pre('validate', function () {
+  if (this.applicantType === 'freelancer' && !this.companyName) {
+    this.companyName = (this.contactPerson || 'Independent Consultant') + ' (Freelancer)';
+  }
+});
 
 export default mongoose.model('Vendor', vendorSchema);

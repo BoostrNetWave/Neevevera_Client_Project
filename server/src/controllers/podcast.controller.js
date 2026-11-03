@@ -49,7 +49,7 @@ export const updatePodcast = async (req, res) => {
   const updated = await Podcast.findByIdAndUpdate(
     req.params.id,
     { ...updateData, updatedBy: req.user._id },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
   res.json({ success: true, data: updated });
 };

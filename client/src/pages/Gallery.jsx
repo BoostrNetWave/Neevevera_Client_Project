@@ -54,7 +54,7 @@ const Gallery = () => {
       <section className="border-b border-[#D8D8D2] pt-10 pb-12 bg-gradient-to-b from-[#F2EFE9]/70 to-[#FAF9F6]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="text-[11px] font-medium tracking-widest uppercase text-[#07558F] font-bold mb-2">
-            07 // FIELD ARCHIVE
+            FIELD ARCHIVE
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
             Technical &amp; Site Gallery

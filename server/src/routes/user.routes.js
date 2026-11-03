@@ -47,7 +47,7 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'name, email, password, and role are required.' });
   }
 
-  const ALLOWED_ROLES = ['admin', 'editor'];
+  const ALLOWED_ROLES = ['admin', 'editor', 'field_staff'];
   if (!ALLOWED_ROLES.includes(role)) {
     // Superadmins are bootstrapped via script — never created via API
     return res.status(400).json({ success: false, message: `role must be one of: ${ALLOWED_ROLES.join(', ')}` });
@@ -88,7 +88,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   }
 
   if (updates.role) {
-    const VALID_ROLES = ['admin', 'editor', 'superadmin'];
+    const VALID_ROLES = ['admin', 'editor', 'superadmin', 'field_staff'];
     if (!VALID_ROLES.includes(updates.role)) {
       return res.status(400).json({ success: false, message: `Invalid role: ${updates.role}` });
     }
@@ -106,7 +106,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 
   updates.updatedBy = req.user._id;
 
-  const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).select('-password');
+  const user = await User.findByIdAndUpdate(req.params.id, updates, { returnDocument: 'after', runValidators: true }).select('-password');
   if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
   res.json({ success: true, data: user });
@@ -123,7 +123,7 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.params.id,
     { isActive: false, updatedBy: req.user._id, $inc: { tokenVersion: 1 } },
-    { new: true }
+    { returnDocument: 'after' }
   ).select('-password');
 
   if (!user) return res.status(404).json({ success: false, message: 'User not found.' });

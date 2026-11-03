@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const blogSchema = new mongoose.Schema(
   {
@@ -6,12 +6,12 @@ const blogSchema = new mongoose.Schema(
     title: { type: String, required: true },
     type: {
       type: String,
-      enum: ['article', 'podcast', 'newsletter', 'field-note'],
+      enum: ['article', 'podcast', 'newsletter', 'field-note', 'research-paper'],
       default: 'article',
     },
     category: {
       type: String,
-      enum: ['company-update', 'project-update', 'industry-news', 'construction-tips', 'engineering', 'maintenance'],
+      enum: ['company-update', 'project-update', 'industry-news', 'construction-tips', 'engineering', 'maintenance', 'research-development'],
     },
     content:        { type: String, required: true },
     excerpt:        String,

@@ -43,7 +43,7 @@ const Team = () => {
       <section className="border-b border-[#D8D8D2] pt-10 pb-12 bg-gradient-to-b from-[#F2EFE9]/70 to-[#FAF9F6]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="text-[11px] font-medium tracking-widest uppercase text-[#07558F] font-bold mb-2">
-            08 // TECHNICAL GOVERNANCE
+            TECHNICAL GOVERNANCE
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111822] tracking-tight">
             Leadership &amp; Engineering Directorate
@@ -70,9 +70,6 @@ const Team = () => {
                       alt={member.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm text-white font-medium text-[10px] px-2 py-0.5 uppercase">
-                      REF // TM-0{member.id}
-                    </div>
                   </div>
 
                   <div className="p-5">

@@ -5,13 +5,26 @@ import { SUPPORTED_LANGUAGES, selectLanguage } from '../../i18n'
 
 const MORE_ITEMS = [
   {
-    key: 'capabilities',
-    to: '/#capabilities',
-    label: 'Capabilities',
-    desc: 'Civil & marine operations',
-    icon: 'architecture',
-    external: true,
+    key: 'book-inspection',
+    to: '/book-inspection',
+    label: 'Book Site Visit',
+    desc: 'Certified civil & soil inspection',
+    icon: 'event_available',
   },
+  {
+    key: 'estimate',
+    to: '/estimate',
+    label: 'Cost Estimator',
+    desc: 'Civil, DSR & rate calculator',
+    icon: 'calculate',
+  },
+  // {
+  //   key: 'capabilities',
+  //   to: '/services',
+  //   label: 'Capabilities',
+  //   desc: 'Civil & marine operations',
+  //   icon: 'architecture',
+  // },
   {
     key: 'gallery',
     to: '/gallery',
@@ -286,7 +299,8 @@ const Navbar = () => {
           </button>
 
           {/* Interactive Language Selector Dropdown (Desktop) */}
-          <div className="relative hidden sm:block" ref={langRef}>
+          {SUPPORTED_LANGUAGES.length > 1 && (
+            <div className="relative hidden sm:block" ref={langRef}>
             <button
               type="button"
               onClick={() => setLangOpen((v) => !v)}
@@ -337,7 +351,8 @@ const Navbar = () => {
                 })}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Primary CTA (Start a Project with circular forward arrow) */}
           <Link
@@ -519,7 +534,8 @@ const Navbar = () => {
             </Link>
 
             {/* Mobile Language Switcher Selector */}
-            <div className="p-2.5 rounded-xl bg-[#FAF9F6] border border-[#DDDAD1]/60">
+            {SUPPORTED_LANGUAGES.length > 1 && (
+              <div className="p-2.5 rounded-xl bg-[#FAF9F6] border border-[#DDDAD1]/60">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] uppercase tracking-wider font-mono font-bold text-gray-500 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[14px] text-[#07558F]">language</span>
@@ -549,7 +565,8 @@ const Navbar = () => {
                   )
                 })}
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Utility Row: Direct Search */}
             <div className="pt-2 flex items-center justify-between border-t border-[#DDDAD1]/40">

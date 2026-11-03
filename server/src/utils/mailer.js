@@ -1,35 +1,42 @@
 import nodemailer from 'nodemailer';
 
 const sendEmail = async ({ to, subject, text, html, attachments }) => {
+  const user = process.env.NODEMAILER_USER || process.env.SMTP_USER;
+  const pass = process.env.NODEMAILER_PASS || process.env.SMTP_PASS;
 
-
-  if (!process.env.NODEMAILER_USER || !process.env.NODEMAILER_PASS) {
-    console.log(`[EMAIL SKIPPED] To: ${to} | Subject: ${subject}`)
-    return
+  if (!user || !pass) {
+    console.log(`[EMAIL SKIPPED] Email credentials not set in .env | To: ${to} | Subject: ${subject}`);
+    return;
   }
 
-  // ✅ transporter created only when credentials exist
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.NODEMAILER_USER,
-      pass: process.env.NODEMAILER_PASS
-    }
-  })
+  // Support both custom SMTP (host/port) and standard provider service (e.g. gmail)
+  const transportConfig = process.env.SMTP_HOST
+    ? {
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: { user, pass },
+      }
+    : {
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: { user, pass },
+      };
+
+  const transporter = nodemailer.createTransport(transportConfig);
 
   try {
     await transporter.sendMail({
-      from:    `"NEEVEVERA PVT LTD" <${process.env.NODEMAILER_USER}>`,
+      from: process.env.EMAIL_FROM || `"NEEVEVERA PVT LTD" <${user}>`,
       to,
       subject,
       text,
       html,
-      attachments
-    })
-    console.log(`[EMAIL SENT] To: ${to} | Subject: ${subject}`)
+      attachments,
+    });
+    console.log(`[EMAIL SENT] To: ${to} | Subject: ${subject}`);
   } catch (err) {
-    console.error('[EMAIL ERROR]', err.message)
+    console.error('[EMAIL ERROR]', err.message);
   }
-}
+};
 
 export default sendEmail;

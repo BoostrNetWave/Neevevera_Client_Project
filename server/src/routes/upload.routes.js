@@ -309,4 +309,28 @@ publicRouter.post(
   })
 );
 
+// POST /api/public-upload/research-proposal — civil researchers uploading research proposals / synopses / CVs
+publicRouter.post(
+  '/research-proposal',
+  publicUploadLimiter,
+  multerUpload.single('file'),
+  validateUpload('supportingDoc'),
+  asyncHandler(async (req, res) => {
+    try {
+      const result = await uploadToCloudinary(req.file.buffer, 'supportingDoc', req.file.originalname);
+      await persistMediaAsset({
+        result,
+        context:      'supportingDoc',
+        originalname: req.file.originalname,
+        mimeType:     req.detectedMimeType,
+        uploadedBy:   null,
+      });
+      return res.status(201).json({ success: true, url: result.secure_url });
+    } catch (err) {
+      console.error('Public research-proposal upload failed:', err);
+      return res.status(500).json({ error: 'Upload failed. Please try again.' });
+    }
+  })
+);
+
 export { router as uploadRouter, publicRouter as publicUploadRouter };

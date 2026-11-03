@@ -23,6 +23,7 @@ export const getVendors = async (req, res) => {
   const filter = {};
   if (req.query.status)        filter.status        = req.query.status;
   if (req.query.tradeCategory) filter.tradeCategory = req.query.tradeCategory;
+  if (req.query.applicantType) filter.applicantType = req.query.applicantType;
   const data = await paginate(Vendor, filter, req);
   res.json({ success: true, ...data });
 };
@@ -41,7 +42,7 @@ export const updateVendorStatus = async (req, res) => {
   const vendor = await Vendor.findByIdAndUpdate(
     req.params.id,
     { status, adminNotes, reviewedBy, reviewedAt: new Date() },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   );
   if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found.' });
   res.json({ success: true, message: 'Vendor status updated.', data: vendor });

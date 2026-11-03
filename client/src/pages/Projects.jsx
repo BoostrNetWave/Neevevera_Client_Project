@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiArrowRight, FiSearch, FiSliders, FiCheckCircle } from 'react-icons/fi'
 import axios from 'axios'
 import { projects as mockProjects } from '../data/mockData'
@@ -7,6 +8,7 @@ import { projects as mockProjects } from '../data/mockData'
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const Projects = () => {
+  const { t } = useTranslation('common')
   const [selectedClassification, setSelectedClassification] = useState('ALL')
   const [selectedTerritory, setSelectedTerritory] = useState('ALL')
   const [selectedState, setSelectedState] = useState('ALL')

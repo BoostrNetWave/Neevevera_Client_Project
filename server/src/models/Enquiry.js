@@ -22,7 +22,7 @@ const enquirySchema = new mongoose.Schema(
     // ── Classification (enables single-inbox filtering) ────────
     type: {
       type: String,
-      enum: ['contact', 'rfq', 'vendor-rfq', 'general', 'service_inquiry', 'coverage_request'],
+      enum: ['contact', 'rfq', 'vendor-rfq', 'general', 'service_inquiry', 'coverage_request', 'quotation'],
       default: 'contact',
     },
 
@@ -42,9 +42,32 @@ const enquirySchema = new mongoose.Schema(
     timeline:         String,
     ndaRequested:     { type: Boolean, default: false },
 
+    // ── Quotation / Estimator Snapshot (Server-calculated) ────
+    estimateSnapshot: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
     // ── Vendor-RFQ specific ────────────────────────────────────
     vendorCategory:   String,    // populated when type === 'vendor-rfq'
     vendorRegion:     String,
+
+    // ── Marketing Partner Referral Attribution (Optional / Non-breaking) ──
+    refCode:            { type: String, trim: true },
+    partnerId:          { type: mongoose.Schema.Types.ObjectId, ref: 'Partner', default: null },
+    referralCapturedAt: { type: Date },
+    attributionStatus: {
+      type: String,
+      enum: ['direct', 'attributed', 'self_referral_blocked', 'duplicate_blocked', 'expired_ignored', 'admin_override'],
+      default: 'direct',
+    },
+    conversionStatus: {
+      type: String,
+      enum: ['none', 'pending_verification', 'converted', 'rejected'],
+      default: 'none',
+    },
+    convertedAt:          { type: Date },
+    conversionValuePaise: { type: Number },
 
     // ── Admin workflow ─────────────────────────────────────────
     status: {
@@ -66,5 +89,7 @@ const enquirySchema = new mongoose.Schema(
 // Indexes for admin inbox queries
 enquirySchema.index({ type: 1, status: 1, createdAt: -1 });
 enquirySchema.index({ email: 1 });
+enquirySchema.index({ partnerId: 1, createdAt: -1 });
+enquirySchema.index({ refCode: 1 });
 
 export default mongoose.model('Enquiry', enquirySchema);

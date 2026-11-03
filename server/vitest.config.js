@@ -17,8 +17,9 @@ export default defineConfig({
       CLOUDINARY_UPLOAD_PRESET: 'neevevera_upload',
     },
 
-    // Timeout per test (career tests seed DB, need headroom)
-    testTimeout: 20000,
+    // Timeout per test and hook (career tests and mongo-memory-server seed DB, need headroom)
+    testTimeout: 30000,
+    hookTimeout: 180000,
 
     // Only look in the tests folder
     include: ['src/tests/**/*.test.js'],

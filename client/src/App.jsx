@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 
@@ -26,7 +26,15 @@ import Podcast from './pages/Podcast'
 import Contact from './pages/Contact'
 import Search from './pages/Search'
 import Vendors from './pages/Vendors'
+import Research from './pages/Research'
 import Estimate from './pages/Estimate'
+import Partners from './pages/Partners'
+import BookInspection from './pages/BookInspection'
+import InspectionStatus from './pages/InspectionStatus'
+import Terms from './pages/legal/Terms'
+import Privacy from './pages/legal/Privacy'
+import RefundPolicy from './pages/legal/RefundPolicy'
+import PartnerTerms from './pages/legal/PartnerTerms'
 import NotFound from './pages/NotFound'
 
 // Phase 3 — Admin Pages
@@ -49,6 +57,13 @@ import AdminNewsletter   from './pages/admin/Newsletter'
 import AdminUsers        from './pages/admin/Users'
 import AdminApplications from './pages/admin/Applications'
 import AdminServiceAreas from './pages/admin/ServiceAreas'
+import AdminDsrRates        from './pages/admin/DsrRates'
+import AdminSiteInspections from './pages/admin/SiteInspections'
+import AdminFieldInspections from './pages/admin/FieldInspections'
+import AdminResearchers     from './pages/admin/Researchers'
+import AdminMarketingPartners from './pages/admin/MarketingPartners'
+
+import { trackIncomingReferral } from './utils/referralTracking'
 
 const ProtectedRoute = ({ children }) => {
   const authed = localStorage.getItem('admin_authed');
@@ -60,6 +75,11 @@ const ProtectedRoute = ({ children }) => {
 }
 
 const App = () => {
+  // Capture ?ref=NV-XXXX on any incoming link and establish 60-day server cookie (first-touch wins)
+  useEffect(() => {
+    trackIncomingReferral();
+  }, []);
+
   return (
     <HelmetProvider>
       <BrowserRouter>
@@ -70,6 +90,7 @@ const App = () => {
             <Route path="about" element={<About />} />
             <Route path="services" element={<Services />} />
             <Route path="services/:slug" element={<ServiceDetail />} />
+            <Route path="capabilities" element={<Navigate to="/services" replace />} />
             <Route path="projects" element={<Projects />} />
             <Route path="projects/:slug" element={<ProjectDetail />} />
             <Route path="gallery" element={<Gallery />} />
@@ -85,7 +106,29 @@ const App = () => {
             <Route path="contact" element={<Contact />} />
             <Route path="search" element={<Search />} />
             <Route path="vendors" element={<Vendors />} />
+            <Route path="freelancers" element={<Vendors />} />
+            <Route path="research" element={<Research />} />
             <Route path="estimate" element={<Estimate />} />
+            <Route path="estimate/items" element={<Estimate />} />
+            <Route path="partners" element={<Partners />} />
+            <Route path="partners/verify" element={<Partners />} />
+            <Route path="book-inspection" element={<BookInspection />} />
+            <Route path="book-inspection/status" element={<InspectionStatus />} />
+            <Route path="field/inspections" element={<Navigate to="/admin/field-inspections" replace />} />
+            <Route path="book-inspection/status/:bookingRef" element={<InspectionStatus />} />
+            <Route path="site-inspection" element={<Navigate to="/book-inspection" replace />} />
+            <Route path="site-inspection/status" element={<Navigate to="/book-inspection/status" replace />} />
+            <Route path="site-inspection/status/:bookingRef" element={<InspectionStatus />} />
+
+            {/* Legal Pages */}
+            <Route path="terms" element={<Terms />} />
+            <Route path="terms-and-conditions" element={<Navigate to="/terms" replace />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="privacy-policy" element={<Navigate to="/privacy" replace />} />
+            <Route path="refund-policy" element={<RefundPolicy />} />
+            <Route path="cancellation-policy" element={<Navigate to="/refund-policy" replace />} />
+            <Route path="partner-terms" element={<PartnerTerms />} />
+
             <Route path="*" element={<NotFound />} />
           </Route>
 
@@ -112,10 +155,15 @@ const App = () => {
 
             {/* Interactions */}
             <Route path="enquiries"     element={<AdminEnquiries />} />
+            <Route path="dsr"           element={<AdminDsrRates />} />
             <Route path="careers"       element={<AdminCareers />} />
             <Route path="applications"  element={<AdminApplications />} />
             <Route path="vendors"       element={<AdminVendors />} />
+            <Route path="researchers"   element={<AdminResearchers />} />
+            <Route path="marketing-partners" element={<AdminMarketingPartners />} />
             <Route path="service-areas" element={<AdminServiceAreas />} />
+            <Route path="site-inspections" element={<AdminSiteInspections />} />
+            <Route path="field-inspections" element={<AdminFieldInspections />} />
 
             {/* System */}
             <Route path="users"         element={<AdminUsers />} />

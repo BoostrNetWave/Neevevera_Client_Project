@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FiMapPin, FiAlertCircle, FiSend, FiX } from 'react-icons/fi';
 import axios from 'axios';
 
 const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function PinCoverageChecker() {
+  const { t } = useTranslation('common');
   const [pincode, setPincode] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -92,11 +94,11 @@ export default function PinCoverageChecker() {
       <div className="flex items-center gap-2 mb-1">
         <FiMapPin className="w-4 h-4 text-[#07558F] shrink-0" />
         <h2 className="font-display text-sm font-bold text-[#111822] tracking-tight">
-          Check service availability
+          {t('services.checkAvailability')}
         </h2>
       </div>
       <p className="text-xs text-[#6B7280] mb-4">
-        Enter your 6-digit PIN code to check coverage.
+        {t('services.checkAvailabilityDesc')}
       </p>
 
       {/* ── Input Row ── */}
@@ -113,7 +115,7 @@ export default function PinCoverageChecker() {
               if (error) setError('');
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') checkPin(); }}
-            placeholder="Enter PIN code"
+            placeholder={t('services.enterPin')}
             aria-label="Enter 6-digit PIN code"
             className="w-full bg-[#FAF9F6] font-mono text-sm pl-9 pr-3 py-2.5 border border-[#D5D3C8] rounded focus:outline-none focus:ring-2 focus:ring-[#07558F] transition-all"
           />
@@ -127,10 +129,10 @@ export default function PinCoverageChecker() {
           {loading ? (
             <>
               <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Checking…</span>
+              <span>{t('services.checking')}</span>
             </>
           ) : (
-            <span>Check</span>
+            <span>{t('services.check')}</span>
           )}
         </button>
       </div>
@@ -152,19 +154,19 @@ export default function PinCoverageChecker() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <span className="text-sm font-semibold text-[#111822]">
-                  Service available
+                  {t('services.serviceAvailable')}
                   {locationLabel && (
                     <span className="text-[#6B7280] font-normal ml-1.5">
-                      in {locationLabel}
+                      {locationLabel}
                     </span>
                   )}
                 </span>
               </div>
               <Link
-                to="/contact?service=site-visit"
+                to={`/book-inspection?pincode=${result?.pincode || pincode}`}
                 className="text-xs font-semibold text-[#07558F] hover:underline whitespace-nowrap shrink-0"
               >
-                Request a site visit →
+                {t('services.requestVisit')}
               </Link>
             </div>
           ) : (
@@ -173,7 +175,7 @@ export default function PinCoverageChecker() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#D1D5DB] shrink-0" />
                 <span className="text-sm text-[#374151]">
-                  We don't currently list service in this area.
+                  {t('services.serviceUnavailable')}
                 </span>
               </div>
 

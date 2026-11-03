@@ -41,3 +41,5 @@ Thumbs.db
 scratch/
 .tempmediaStorage/
 *.tmp
+dsr-import-report-*.json
+test-dsr-*.csv

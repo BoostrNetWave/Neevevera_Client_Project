@@ -29,10 +29,14 @@ const NAV = [
     group: 'Interactions',
     items: [
       { label: 'Enquiries',        path: '/admin/enquiries',     icon: 'inbox' },
+      { label: 'Site Inspections', path: '/admin/site-inspections', icon: 'event_available' },
+      { label: 'DSR Rates & CMS',  path: '/admin/dsr',           icon: 'calculate' },
       { label: 'Service Coverage', path: '/admin/service-areas',  icon: 'share_location' },
       { label: 'Careers',          path: '/admin/careers',       icon: 'work' },
       { label: 'Applications',     path: '/admin/applications',  icon: 'badge' },
       { label: 'Vendors',          path: '/admin/vendors',       icon: 'local_shipping' },
+      { label: 'Researchers',      path: '/admin/researchers',   icon: 'science' },
+      { label: 'Marketing Partners', path: '/admin/marketing-partners', icon: 'handshake' },
     ],
   },
   {

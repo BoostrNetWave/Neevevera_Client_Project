@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FiCheckCircle, FiShield, FiAward, FiArrowRight, FiUsers, FiMapPin, FiCompass } from 'react-icons/fi'
 import { metrics, teamMembers as mockTeamMembers } from '../data/mockData'
 import axios from 'axios'
@@ -7,19 +8,35 @@ import axios from 'axios'
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const About = () => {
+  const { t } = useTranslation('common')
   const [liveMembers, setLiveMembers] = useState([])
   const [companyInfo, setCompanyInfo] = useState(null)
+  const [dynamicStats, setDynamicStats] = useState([])
 
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
-        const [teamRes, compRes] = await Promise.all([
+        const [teamRes, compRes, homeRes] = await Promise.all([
           axios.get(`${API}/team`, { params: { limit: 100 } }).catch(() => ({ data: {} })),
-          axios.get(`${API}/company`).catch(() => ({ data: {} }))
+          axios.get(`${API}/company`).catch(() => ({ data: {} })),
+          axios.get(`${API}/home`).catch(() => ({ data: {} }))
         ])
 
         if (compRes.data?.success && compRes.data?.data) {
           setCompanyInfo(compRes.data.data)
+        }
+
+        if (homeRes.data?.success && homeRes.data?.data?.stats?.length > 0) {
+          const formattedStats = homeRes.data.data.stats
+            .filter(s => s.value || s.label)
+            .map(s => ({
+              value: `${s.value}${s.suffix || ''}`,
+              label: s.label,
+              note: ''
+            }))
+          if (formattedStats.length > 0) {
+            setDynamicStats(formattedStats)
+          }
         }
 
         if (teamRes.data?.success && teamRes.data?.items) {
@@ -42,13 +59,14 @@ const About = () => {
   }, [])
 
   const allMembers = [...mockTeamMembers, ...liveMembers]
+  const displayMetrics = dynamicStats.length > 0 ? dynamicStats : metrics
   return (
     <div className="w-full bg-[#FAF9F6] text-[#171717]">
       {/* ── Page Header ── */}
       <section className="border-b border-[#D8D8D2] pt-10 pb-14 bg-gradient-to-b from-[#F2EFE9]/70 to-[#FAF9F6]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="text-[11px] font-medium tracking-widest uppercase text-[#07558F] font-bold mb-2">
-            01 // INSTITUTIONAL PROFILE
+            INSTITUTIONAL PROFILE
           </div>
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#111822] tracking-tight">
             Engineering Legacy. <br />
@@ -154,7 +172,7 @@ const About = () => {
       <section className="py-12 border-b border-[#D8D8D2] bg-[#F2EFE9]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {metrics.map((m, idx) => (
+            {displayMetrics.map((m, idx) => (
               <div key={idx} className="border-l-2 pl-4 py-2 border-[#07558F] bg-white p-4">
                 <div className="font-medium text-3xl font-extrabold text-[#111822]">
                   {m.value}

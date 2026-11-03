@@ -1,9 +1,21 @@
 import TeamMember from '../models/TeamMember.js';
 import { paginate } from '../utils/paginate.js';
 import { claimDocMedia, syncDocMediaUsage } from '../utils/mediaFields.js';
+import { maskPhone } from '../utils/masking.js';
+
+export function serializeTeamMemberPublic(member) {
+  const obj = typeof member.toObject === 'function' ? member.toObject() : { ...member };
+  if (obj.phone) {
+    obj.phone = maskPhone(obj.phone);
+  }
+  return obj;
+}
 
 export const getTeamMembers = async (req, res) => {
   const data = await paginate(TeamMember, { isActive: true }, req, { sort: { order: 1 } });
+  if (Array.isArray(data.docs)) {
+    data.docs = data.docs.map(serializeTeamMemberPublic);
+  }
   res.json({ success: true, ...data });
 };
 
@@ -20,7 +32,8 @@ export const getTeamMember = async (req, res) => {
   // Relax isActive: true so admin can load inactive members for editing
   const member = await TeamMember.findOne({ _id: req.params.id });
   if (!member) return res.status(404).json({ success: false, message: 'Team member not found.' });
-  res.json({ success: true, data: member });
+  const isAuthAdmin = req.user && ['admin', 'superadmin', 'editor'].includes(req.user.role);
+  res.json({ success: true, data: isAuthAdmin ? member : serializeTeamMemberPublic(member) });
 };
 
 export const createTeamMember = async (req, res) => {
